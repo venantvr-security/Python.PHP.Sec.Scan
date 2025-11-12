@@ -4,7 +4,7 @@ from typing import Dict, Any
 import yaml
 
 
-def parse_dsl(file_path: str = "../config/rules.yaml") -> Dict[str, Any]:
+def parse_dsl(file_path: str = "config/rules.yaml") -> Dict[str, Any]:
     """Parse le fichier DSL et retourne les règles structurées."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:

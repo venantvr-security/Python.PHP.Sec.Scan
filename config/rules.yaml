@@ -5,6 +5,10 @@ rules:
       - pattern: "$_GET[*]"
       - pattern: "$_POST[*]"
       - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "$_SESSION[*]"
+      - pattern: "getenv"
+      - pattern: "file_get_contents"
     sinks:
       - node_type: "function_call_expression"
         function: "mysqli_query"
@@ -20,16 +24,40 @@ rules:
             type: string
             contains: variable
         vuln: "sql_injection"
+      - node_type: "member_call_expression"
+        function: "query"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "sql_injection"
+      - node_type: "member_call_expression"
+        function: "exec"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "sql_injection"
     filters:
       - function: "mysqli_real_escape_string"
         sanitizes: [ "sql_injection" ]
       - function: "filter_var"
+        sanitizes: [ "sql_injection" ]
+      - function: "intval"
+        sanitizes: [ "sql_injection" ]
+      - function: "floatval"
+        sanitizes: [ "sql_injection" ]
+      - function: "filter_input"
         sanitizes: [ "sql_injection" ]
 
   - name: xss
     sources:
       - pattern: "$_GET[*]"
       - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "$_SESSION[*]"
+      - pattern: "file_get_contents"
     sinks:
       - node_type: "echo_statement"
         args:
@@ -58,3 +86,176 @@ rules:
       - type: binary_expression
         operator: "=="
         vuln: "auth_bypass"
+
+  - name: rce
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "$_SERVER[*]"
+    sinks:
+      - node_type: "function_call_expression"
+        function: "eval"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "exec"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "system"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "shell_exec"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "passthru"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "popen"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+      - node_type: "function_call_expression"
+        function: "proc_open"
+        args:
+          - index: 0
+            type: variable
+        vuln: "rce"
+    filters:
+      - function: "escapeshellarg"
+        sanitizes: [ "rce" ]
+      - function: "escapeshellcmd"
+        sanitizes: [ "rce" ]
+
+  - name: file_inclusion
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+    sinks:
+      - node_type: "include_expression"
+        function: "include"
+        args:
+          - index: 0
+            type: variable
+        vuln: "file_inclusion"
+      - node_type: "include_once_expression"
+        function: "include_once"
+        args:
+          - index: 0
+            type: variable
+        vuln: "file_inclusion"
+      - node_type: "require_expression"
+        function: "require"
+        args:
+          - index: 0
+            type: variable
+        vuln: "file_inclusion"
+      - node_type: "require_once_expression"
+        function: "require_once"
+        args:
+          - index: 0
+            type: variable
+        vuln: "file_inclusion"
+    filters:
+      - function: "basename"
+        sanitizes: [ "file_inclusion", "path_traversal" ]
+      - function: "realpath"
+        sanitizes: [ "file_inclusion", "path_traversal" ]
+
+  - name: command_injection
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "$_SERVER[*]"
+    sinks:
+      - node_type: "function_call_expression"
+        function: "exec"
+        args:
+          - index: 0
+            type: variable
+        vuln: "command_injection"
+      - node_type: "function_call_expression"
+        function: "system"
+        args:
+          - index: 0
+            type: variable
+        vuln: "command_injection"
+      - node_type: "function_call_expression"
+        function: "shell_exec"
+        args:
+          - index: 0
+            type: variable
+        vuln: "command_injection"
+      - node_type: "function_call_expression"
+        function: "passthru"
+        args:
+          - index: 0
+            type: variable
+        vuln: "command_injection"
+    filters:
+      - function: "escapeshellarg"
+        sanitizes: [ "command_injection" ]
+      - function: "escapeshellcmd"
+        sanitizes: [ "command_injection" ]
+
+  - name: path_traversal
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+    sinks:
+      - node_type: "function_call_expression"
+        function: "file_get_contents"
+        args:
+          - index: 0
+            type: variable
+        vuln: "path_traversal"
+      - node_type: "function_call_expression"
+        function: "fopen"
+        args:
+          - index: 0
+            type: variable
+        vuln: "path_traversal"
+      - node_type: "function_call_expression"
+        function: "readfile"
+        args:
+          - index: 0
+            type: variable
+        vuln: "path_traversal"
+      - node_type: "function_call_expression"
+        function: "file"
+        args:
+          - index: 0
+            type: variable
+        vuln: "path_traversal"
+      - node_type: "function_call_expression"
+        function: "unlink"
+        args:
+          - index: 0
+            type: variable
+        vuln: "path_traversal"
+    filters:
+      - function: "basename"
+        sanitizes: [ "path_traversal", "file_inclusion" ]
+      - function: "realpath"
+        sanitizes: [ "path_traversal", "file_inclusion" ]

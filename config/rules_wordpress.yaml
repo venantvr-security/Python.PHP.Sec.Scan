@@ -1,0 +1,196 @@
+# config/rules_wordpress.yaml
+# WordPress-specific security rules
+
+rules:
+  - name: wp_xss
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "$_SERVER[*]"
+      - pattern: "get_the_title"
+      - pattern: "get_the_content"
+      - pattern: "get_post_meta"
+      - pattern: "get_option"
+      - pattern: "get_user_meta"
+    sinks:
+      - node_type: "echo_statement"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_xss"
+      - node_type: "function_call_expression"
+        function: "print"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_xss"
+      - node_type: "function_call_expression"
+        function: "_e"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_xss"
+      - node_type: "function_call_expression"
+        function: "__"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_xss"
+    filters:
+      - function: "esc_html"
+        sanitizes: ["wp_xss"]
+      - function: "esc_attr"
+        sanitizes: ["wp_xss"]
+      - function: "esc_url"
+        sanitizes: ["wp_xss"]
+      - function: "esc_js"
+        sanitizes: ["wp_xss"]
+      - function: "esc_textarea"
+        sanitizes: ["wp_xss"]
+      - function: "wp_kses"
+        sanitizes: ["wp_xss"]
+      - function: "wp_kses_post"
+        sanitizes: ["wp_xss"]
+      - function: "sanitize_text_field"
+        sanitizes: ["wp_xss"]
+      - function: "sanitize_email"
+        sanitizes: ["wp_xss"]
+      - function: "sanitize_url"
+        sanitizes: ["wp_xss"]
+
+  - name: wp_sql_injection
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_REQUEST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "get_post_meta"
+      - pattern: "get_option"
+      - pattern: "get_user_meta"
+    sinks:
+      - node_type: "member_call_expression"
+        function: "query"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "wp_sql_injection"
+      - node_type: "member_call_expression"
+        function: "get_results"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "wp_sql_injection"
+      - node_type: "member_call_expression"
+        function: "get_row"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "wp_sql_injection"
+      - node_type: "member_call_expression"
+        function: "get_var"
+        args:
+          - index: 0
+            type: string
+            contains: variable
+        vuln: "wp_sql_injection"
+    filters:
+      - function: "esc_sql"
+        sanitizes: ["wp_sql_injection"]
+        warning: "Use prepare() instead of esc_sql()"
+      - function: "prepare"
+        sanitizes: ["wp_sql_injection"]
+      - function: "absint"
+        sanitizes: ["wp_sql_injection"]
+      - function: "intval"
+        sanitizes: ["wp_sql_injection"]
+      - function: "sanitize_key"
+        sanitizes: ["wp_sql_injection"]
+
+  - name: wp_nonce_missing
+    # Detection of actions without nonce verification
+    patterns:
+      - type: "conditional_expression"
+        condition_contains: "$_POST"
+        missing_function: "wp_verify_nonce"
+        vuln: "wp_nonce_missing"
+
+  - name: wp_capability_check_missing
+    # Detection of admin actions without capability check
+    patterns:
+      - type: "function_call_expression"
+        function: "update_option"
+        not_preceded_by: "current_user_can"
+        vuln: "wp_capability_check_missing"
+
+  - name: wp_file_upload_unsafe
+    sources:
+      - pattern: "$_FILES[*]"
+    sinks:
+      - node_type: "function_call_expression"
+        function: "move_uploaded_file"
+        args:
+          - index: 1
+            type: variable
+        vuln: "wp_file_upload"
+      - node_type: "function_call_expression"
+        function: "file_put_contents"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_file_upload"
+    filters:
+      - function: "wp_check_filetype"
+        sanitizes: ["wp_file_upload"]
+      - function: "wp_handle_upload"
+        sanitizes: ["wp_file_upload"]
+      - function: "sanitize_file_name"
+        sanitizes: ["wp_file_upload"]
+
+  - name: wp_direct_file_access
+    # Detect files without ABSPATH check
+    patterns:
+      - type: "missing_check"
+        check_pattern: "defined.*ABSPATH"
+        vuln: "wp_direct_file_access"
+        severity: "medium"
+
+  - name: wp_unsafe_unserialize
+    sources:
+      - pattern: "$_GET[*]"
+      - pattern: "$_POST[*]"
+      - pattern: "$_COOKIE[*]"
+      - pattern: "get_option"
+      - pattern: "get_post_meta"
+    sinks:
+      - node_type: "function_call_expression"
+        function: "unserialize"
+        args:
+          - index: 0
+            type: variable
+        vuln: "wp_unsafe_unserialize"
+    filters:
+      - function: "maybe_unserialize"
+        sanitizes: ["wp_unsafe_unserialize"]
+        warning: "Use maybe_unserialize() with caution"
+
+  - name: wp_csrf
+    # CSRF without nonce in forms
+    patterns:
+      - type: "form_without_nonce"
+        form_method: "post"
+        missing_function: "wp_nonce_field"
+        vuln: "wp_csrf"
+
+  - name: wp_timing_attack
+    # Unsafe password/token comparison
+    patterns:
+      - type: "unsafe_comparison"
+        operators: ["==", "!="]
+        comparing: ["password", "token", "nonce", "key", "secret"]
+        vuln: "wp_timing_attack"
+        recommendation: "Use hash_equals() for timing-safe comparison"

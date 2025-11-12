@@ -48,6 +48,10 @@ class TaintTracker:
             'member_call_expression': self.handle_member_call,
             'echo_statement': self.handle_echo_statement,
             'binary_expression': self.handle_binary_expression,
+            'include_expression': self.handle_include_statement,
+            'include_once_expression': self.handle_include_statement,
+            'require_expression': self.handle_include_statement,
+            'require_once_expression': self.handle_include_statement,
         }
 
     @staticmethod
@@ -68,16 +72,25 @@ class TaintTracker:
 
     def _load_sinks(self) -> Dict[str, Set[str]]:
         """Charge les sinks depuis rules.dsl, organisés par node_type."""
-        sinks = {'function_call_expression': set(), 'echo_statement': set()}
+        sinks = {
+            'function_call_expression': set(),
+            'member_call_expression': set(),
+            'echo_statement': set(),
+            'include_expression': set(),
+            'include_once_expression': set(),
+            'require_expression': set(),
+            'require_once_expression': set()
+        }
         for rule in self.rules.values():
             if rule['name'] in self.vuln_types:
                 for sink in rule.get('sinks', []):
                     node_type = sink.get('node_type')
-                    if node_type in sinks:
-                        if 'function' in sink:
-                            sinks[node_type].add(sink['function'])
-                        elif node_type == 'echo_statement':
-                            sinks[node_type].add('echo')
+                    if node_type not in sinks:
+                        sinks[node_type] = set()
+                    if 'function' in sink:
+                        sinks[node_type].add(sink['function'])
+                    elif node_type == 'echo_statement':
+                        sinks[node_type].add('echo')
         self.logger.info(f"Loaded sinks: {sinks}")
         return sinks
 
@@ -119,19 +132,26 @@ class TaintTracker:
                     if re.match(pattern, text, re.DOTALL):
                         self.logger.info(f"Source detected (regex): {text}")
                         return True
-                    if object_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV']:
+                    if object_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV', '$_SESSION']:
                         self.logger.info(f"Source detected (object): {text}, object={object_text}")
                         return True
                     for child in node.named_children:
                         if child.type == 'variable_name' and get_node_text(child, self.source_code) in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER',
-                                                                                                        '$_ENV']:
+                                                                                                        '$_ENV', '$_SESSION']:
                             self.logger.info(f"Source detected (child): {text}, child={get_node_text(child, self.source_code)}")
                             return True
         elif node.type == 'variable_name':
             var_text = get_node_text(node, self.source_code)
-            if var_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV']:
+            if var_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV', '$_SESSION']:
                 self.logger.info(f"Source detected (direct variable): {var_text}")
                 return True
+        elif node.type == 'function_call_expression':
+            func_node = node.child_by_field_name('function')
+            if func_node:
+                func_name = get_node_text(func_node, self.source_code)
+                if func_name in ['getenv', 'file_get_contents']:
+                    self.logger.info(f"Source detected (function): {func_name}")
+                    return True
         return False
 
     def is_filter_call(self, node: Node) -> tuple[bool, List[str], str | None]:
@@ -235,7 +255,7 @@ class TaintTracker:
                                     self.logger.info(f"Propagated taint: {arg_var} -> {param_var} in {func_name}")
 
     def handle_member_call(self, node: Node) -> None:
-        """Gère les appels de méthodes pour sanitization."""
+        """Gère les appels de méthodes pour sanitization et sinks."""
         is_filter, sanitized_types, filter_name = self.is_filter_call(node)
         if is_filter:
             args = node.child_by_field_name('arguments')
@@ -243,12 +263,28 @@ class TaintTracker:
                 var_name = get_node_text(args.named_children[0].named_children[0], self.source_code)
                 self.taint_state.mark_sanitized(var_name, sanitized_types)
                 self.logger.info(f"Sanitized var: {var_name} by {filter_name}")
+        else:
+            # Vérifier si c'est un sink
+            method_node = node.child_by_field_name('name')
+            if method_node:
+                method_name = get_node_text(method_node, self.source_code)
+                if method_name in self.sink_functions['member_call_expression']:
+                    self.sink_nodes.append(node)
+                    self.logger.info(f"Member call sink detected: {method_name}")
 
     def handle_echo_statement(self, node: Node) -> None:
         """Gère les echo comme sinks."""
         if 'echo' in self.sink_functions['echo_statement']:
             self.sink_nodes.append(node)
             self.logger.info("Echo detected as sink")
+
+    def handle_include_statement(self, node: Node) -> None:
+        """Gère les include/require comme sinks."""
+        node_type = node.type
+        func_name = node_type.replace('_expression', '')
+        if func_name in self.sink_functions.get(node_type, set()):
+            self.sink_nodes.append(node)
+            self.logger.info(f"{func_name} detected as sink")
 
     def handle_binary_expression(self, node: Node, file_path: str) -> None:
         """Analyse les comparaisons faibles (ex. auth_bypass)."""
@@ -290,9 +326,24 @@ class TaintTracker:
             args_node = node.child_by_field_name('arguments')
             if args_node:
                 args = args_node.named_children
+        elif node.type == 'member_call_expression':
+            method_node = node.child_by_field_name('name')
+            if not method_node:
+                return
+            func_name = get_node_text(method_node, self.source_code)
+            args_node = node.child_by_field_name('arguments')
+            if args_node:
+                args = args_node.named_children
         elif node.type == 'echo_statement':
             func_name = 'echo'
             args = node.named_children
+        elif node.type in ['include_expression', 'include_once_expression', 'require_expression', 'require_once_expression']:
+            func_name = node.type.replace('_expression', '')
+            for child in node.children:
+                if child.type == 'parenthesized_expression':
+                    if child.named_children:
+                        args = [child.named_children[0]]
+                    break
 
         vuln_type, args_to_check = self.get_sink_info(func_name, node_type)
         if not vuln_type:
@@ -306,8 +357,15 @@ class TaintTracker:
             if arg_index < len(args):
                 arg = args[arg_index]
                 self.logger.info(f"Checking arg {arg_index}: type={arg.type}")
+
+                # Extraire l'argument réel
+                actual_arg = None
                 if arg.type == 'argument' and arg.named_children:  # function_call_expression
                     actual_arg = arg.named_children[0]
+                elif arg.type == 'variable_name':  # echo_statement ou include sans wrapper
+                    actual_arg = arg
+
+                if actual_arg:
                     self.logger.info(f"Actual arg type: {actual_arg.type}")
                     if arg_type == 'variable' and actual_arg.type == 'variable_name':
                         var_name = get_node_text(actual_arg, self.source_code)
@@ -341,19 +399,6 @@ class TaintTracker:
                                 find_variables(child)
 
                         find_variables(actual_arg)
-                elif arg_type == 'variable' and arg.type == 'variable_name':  # echo_statement
-                    var_name = get_node_text(arg, self.source_code)
-                    self.logger.info(f"Variable arg: {var_name}, tainted: {self.taint_state.is_tainted(var_name)}")
-                    if self.taint_state.is_tainted(var_name) and not self.taint_state.is_sanitized_for(var_name, vuln_type):
-                        self.vulnerabilities.append({
-                            "type": vuln_type,
-                            "sink": func_name,
-                            "variable": var_name,
-                            "line": node.start_point[0] + 1,
-                            "file": file_path,
-                            "trace": f"Source tainted: {var_name} → Sink: {func_name}"
-                        })
-                        self.logger.info(f"Adding vulnerability: {vuln_type} for {var_name}")
 
     def has_tainted_return(self, func_def: Node) -> bool:
         """Vérifie si une fonction retourne une valeur tainted."""

@@ -1,0 +1,75 @@
+{
+  "scan_config": {
+    "vuln_types": [
+      "sql_injection",
+      "xss",
+      "rce",
+      "file_inclusion",
+      "command_injection",
+      "path_traversal"
+    ],
+    "project": "demo",
+    "workers": 12
+  },
+  "statistics": {
+    "total_files": 5,
+    "total_vulnerabilities": 0,
+    "total_warnings": 1,
+    "cache_hits": 4,
+    "cache_hit_rate": 0.8,
+    "total_analysis_time": 0.9737844467163086,
+    "average_time_per_file": 0.1947568893432617,
+    "errors": 0,
+    "vulnerabilities_by_type": {}
+  },
+  "results": {
+    "tests/vuln_samples/sql_injection.php": {
+      "vulnerabilities": [],
+      "warnings": [
+        {
+          "type": "unsanitized_source",
+          "variable": "$id",
+          "line": 3,
+          "file": "tests/vuln_samples/sql_injection.php",
+          "message": "La variable $id est lue depuis une source utilisateur ou propag\u00e9e sans \u00eatre d\u00e9sinfect\u00e9e."
+        }
+      ],
+      "analysis_time": 0.03981184959411621,
+      "cached": true,
+      "filepath": "tests/vuln_samples/sql_injection.php",
+      "file_hash": "1c61ed56b15b414fc5e2209857abbdd04a1aa01b44dd8b3b922e7127de7d539b"
+    },
+    "tests/vuln_samples/insecure_upload.php": {
+      "vulnerabilities": [],
+      "warnings": [],
+      "analysis_time": 0.2760453224182129,
+      "cached": true,
+      "filepath": "tests/vuln_samples/insecure_upload.php",
+      "file_hash": "20af553c24cbd64be7957b7e4ba4f55175b55a1405086d201ecae624b78370f7"
+    },
+    "tests/vuln_samples/session_fixation.php": {
+      "vulnerabilities": [],
+      "warnings": [],
+      "analysis_time": 0.26735901832580566,
+      "cached": true,
+      "filepath": "tests/vuln_samples/session_fixation.php",
+      "file_hash": "2bf8f4e5aac9c80718ab30d3543ee186fc668feb69363c443a2707e34531bea0"
+    },
+    "tests/vuln_samples/xss.php": {
+      "vulnerabilities": [],
+      "warnings": [],
+      "analysis_time": 0.37467265129089355,
+      "cached": true,
+      "filepath": "tests/vuln_samples/xss.php",
+      "file_hash": "5e65353f6bdd075bc0d729ae63293e995936e6eb548b801044b86c88da24fde1"
+    },
+    "tests/vuln_samples/auth_bypass.php": {
+      "filepath": "tests/vuln_samples/auth_bypass.php",
+      "file_hash": "2a7955f0a08ea6eb729d064db2acfac59bdce5450f839c3315e00eb9c5e5146d",
+      "vulnerabilities": [],
+      "warnings": [],
+      "analysis_time": 0.015895605087280273,
+      "cached": false
+    }
+  }
+}
