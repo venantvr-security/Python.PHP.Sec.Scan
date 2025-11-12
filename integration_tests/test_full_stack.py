@@ -367,9 +367,9 @@ def test_cli_integration(test_php_files):
 
     output_file = os.path.join(tmpdir, 'cli_results.json')
 
-    # Run CLI
+    # Run CLI (updated command structure)
     result = subprocess.run([
-        sys.executable, 'cli_v2.py',
+        sys.executable, 'cli.py', 'scan',
         '--files'] + files + [
         '--output', output_file,
         '--no-db',
