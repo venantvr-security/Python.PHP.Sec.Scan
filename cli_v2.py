@@ -9,6 +9,7 @@ from db.connection import get_session, init_db
 from db.models import Project, Scan, Vulnerability, Warning, File as FileModel, ScanStatus
 from workers.parallel_scanner import ParallelScanner
 from workers.progress_tracker import ProgressTracker
+from plugins import PluginManager, WordPressPlugin, PerformancePlugin
 
 
 def save_to_database(
@@ -122,6 +123,10 @@ def main():
     parser.add_argument('--verbose', action='store_true', help='Verbose output')
     parser.add_argument('--no-progress', action='store_true', help='Disable progress bar')
 
+    # Plugin options
+    parser.add_argument('--enable-plugins', action='store_true', help='Enable plugin system')
+    parser.add_argument('--load-plugins-from', help='Directory to load custom plugins from')
+
     # Database management
     parser.add_argument('--init-db', action='store_true', help='Initialize database and exit')
 
@@ -137,12 +142,23 @@ def main():
     if not args.files and not args.dir:
         parser.error("Either --files or --dir must be specified")
 
+    # Initialize plugin manager
+    plugin_manager = None
+    if args.enable_plugins:
+        plugin_manager = PluginManager()
+        plugin_manager.register(WordPressPlugin())
+        plugin_manager.register(PerformancePlugin())
+
+        if args.load_plugins_from:
+            plugin_manager.load_from_directory(args.load_plugins_from)
+
     # Create scanner
     scanner = ParallelScanner(
         vuln_types=args.vuln_types,
         max_workers=args.workers,
         use_cache=not args.no_cache,
         verbose=args.verbose,
+        plugin_manager=plugin_manager,
     )
 
     # Create progress tracker
@@ -152,13 +168,16 @@ def main():
     print(f"Starting scan with {scanner.max_workers} workers...")
     print(f"Vulnerability types: {', '.join(args.vuln_types)}")
     print(f"Caching: {'disabled' if args.no_cache else 'enabled'}")
+    print(f"Plugins: {'enabled' if args.enable_plugins else 'disabled'}")
 
     if args.dir:
-        results = scanner.scan_directory(args.dir, progress)
         root_path = args.dir
+        scan_context = {'root_path': root_path, 'project': args.project}
+        results = scanner.scan_files([str(f) for f in Path(root_path).rglob('*.php')], progress, scan_context)
     else:
-        results = scanner.scan_files(args.files, progress)
         root_path = str(Path(args.files[0]).parent)
+        scan_context = {'root_path': root_path, 'project': args.project}
+        results = scanner.scan_files(args.files, progress, scan_context)
 
     # Get statistics
     stats = scanner.get_statistics(results)

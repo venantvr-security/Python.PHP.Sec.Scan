@@ -1,0 +1,56 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  scanner-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://scanner:scanner123@postgres:5432/scanner
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./reports:/app/reports
+      - ./cache_data:/app/cache_data
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=scanner
+      - POSTGRES_PASSWORD=scanner123
+      - POSTGRES_DB=scanner
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  scanner-worker:
+    build: .
+    command: python -m workers.background_worker
+    environment:
+      - DATABASE_URL=postgresql://scanner:scanner123@postgres:5432/scanner
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./reports:/app/reports
+      - ./cache_data:/app/cache_data
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

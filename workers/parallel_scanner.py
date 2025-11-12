@@ -23,7 +23,8 @@ class ParallelScanner:
         max_workers: Optional[int] = None,
         use_cache: bool = True,
         verbose: bool = False,
-        progress_callback: Optional[Callable[[int, int, str], None]] = None
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        plugin_manager=None
     ):
         """
         Initialize parallel scanner.
@@ -34,12 +35,14 @@ class ParallelScanner:
             use_cache: Enable AST caching
             verbose: Enable verbose logging
             progress_callback: Callback for progress updates (completed, total, filename)
+            plugin_manager: Optional PluginManager instance
         """
         self.vuln_types = vuln_types
         self.max_workers = max_workers or min(os.cpu_count() or 4, 16)
         self.use_cache = use_cache
         self.verbose = verbose
         self.progress_callback = progress_callback
+        self.plugin_manager = plugin_manager
 
         if use_cache:
             self.cache = ASTCache()
@@ -135,7 +138,8 @@ class ParallelScanner:
     def scan_files(
         self,
         filepaths: List[str],
-        progress_tracker: Optional[ProgressTracker] = None
+        progress_tracker: Optional[ProgressTracker] = None,
+        scan_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Scan multiple files in parallel.
@@ -143,6 +147,7 @@ class ParallelScanner:
         Args:
             filepaths: List of PHP file paths
             progress_tracker: Optional progress tracker
+            scan_context: Context dict for plugins
 
         Returns:
             Dict mapping filepath to scan results
@@ -151,6 +156,10 @@ class ParallelScanner:
         total_files = len(filepaths)
 
         self.logger.info(f"Scanning {total_files} files with {self.max_workers} workers")
+
+        # Trigger plugin scan start
+        if self.plugin_manager and scan_context:
+            self.plugin_manager.trigger_scan_start(scan_context)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
@@ -166,6 +175,10 @@ class ParallelScanner:
                 try:
                     result = future.result()
                     results[filepath] = result
+
+                    # Trigger plugin file scanned
+                    if self.plugin_manager:
+                        self.plugin_manager.trigger_file_scanned(filepath, result)
 
                     completed += 1
 
@@ -193,6 +206,11 @@ class ParallelScanner:
                         'warnings': [],
                         'error': str(e),
                     }
+
+        # Trigger plugin scan complete
+        if self.plugin_manager:
+            scan_results = {'files': results, 'statistics': self.get_statistics(results)}
+            self.plugin_manager.trigger_scan_complete(scan_results)
 
         return results
 
