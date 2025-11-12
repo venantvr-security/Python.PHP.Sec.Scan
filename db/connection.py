@@ -30,6 +30,7 @@ if DATABASE_URL.startswith("sqlite"):
         "poolclass": StaticPool,
     })
 
+
     # Enable foreign keys for SQLite
     @event.listens_for(Engine, "connect")
     def set_sqlite_pragma(dbapi_conn, connection_record):

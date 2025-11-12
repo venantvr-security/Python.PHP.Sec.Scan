@@ -8,10 +8,11 @@ This example demonstrates how to create a plugin that:
 3. Exports custom metrics
 """
 
-from typing import Dict, Any, Optional
-from plugins import ScannerPlugin
-from collections import defaultdict
 import json
+from collections import defaultdict
+from typing import Dict, Any, Optional
+
+from plugins import ScannerPlugin
 
 
 class LaravelSecurityPlugin(ScannerPlugin):
@@ -146,9 +147,9 @@ class LaravelSecurityPlugin(ScannerPlugin):
         }
 
         # Print summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("LARAVEL SECURITY SUMMARY")
-        print("="*60)
+        print("=" * 60)
         print(f"Controllers: {len(self.controllers)}")
         print(f"Models: {len(self.models)}")
         print(f"Laravel Warnings: {total_laravel_warnings}")
@@ -206,6 +207,7 @@ if __name__ == '__main__':
     print(f"Scanning Laravel project: {project_path}")
 
     from pathlib import Path
+
     php_files = [str(f) for f in Path(project_path).rglob('*.php')]
 
     scan_context = {'root_path': project_path, 'project': 'laravel-app'}

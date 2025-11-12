@@ -1,8 +1,10 @@
 # optimization/batch_db_operations.py
 """Batch database operations for improved performance."""
 
+from typing import Dict
+
 from sqlalchemy.orm import Session
-from typing import List, Dict
+
 from db.models import Vulnerability, Warning
 
 

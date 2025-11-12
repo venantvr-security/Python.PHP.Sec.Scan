@@ -1,13 +1,14 @@
 # api/main.py
 """FastAPI REST API for PHP Security Scanner."""
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import List, Optional
 import os
 import tempfile
+from typing import List, Optional
+
 import tree_sitter_php as tsphp
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from tree_sitter import Parser, Language
 
 from db.connection import get_session
@@ -336,4 +337,5 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

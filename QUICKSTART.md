@@ -53,8 +53,7 @@ python cli.py suppress add \
 # Start web server
 python web_interface.py
 
-# Open browser
-# → http://localhost:5000
+# Open browser to http://localhost:5000
 
 # Features:
 # - Point-and-click scan launcher
@@ -70,8 +69,7 @@ python web_interface.py
 # Start API server
 uvicorn api.main:app --reload
 
-# Open docs
-# → http://localhost:8000/docs
+# Open API docs at http://localhost:8000/docs
 
 # Example: Trigger scan via API
 curl -X POST http://localhost:8000/scan \
@@ -212,6 +210,7 @@ uvicorn api.main:app --reload              # Start API (port 8000)
 ## Troubleshooting
 
 **"No PHP files found"**
+
 ```bash
 # Check path is correct
 ls /path/to/project/*.php
@@ -221,6 +220,7 @@ find /path/to/project -name "*.php"
 ```
 
 **"Database error"**
+
 ```bash
 # Reinitialize database
 python cli.py --init-db
@@ -230,6 +230,7 @@ ls -la scanner.db
 ```
 
 **"Import errors"**
+
 ```bash
 # Ensure virtual environment is activated
 source .venv/bin/activate
@@ -239,6 +240,7 @@ pip install -r requirements.txt
 ```
 
 **"Slow scans"**
+
 ```bash
 # Increase workers
 python cli.py scan --dir /app --workers 16

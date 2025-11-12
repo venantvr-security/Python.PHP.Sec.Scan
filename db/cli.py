@@ -1,6 +1,7 @@
 # db/cli.py
 """Database management CLI."""
 import sys
+
 from db.connection import init_db, drop_db, engine, DATABASE_URL
 
 

@@ -1,6 +1,7 @@
 # tests/test_suppressions.py
-import tempfile
 import os
+import tempfile
+
 from suppressions.manager import SuppressionManager, AllowlistManager
 
 

@@ -11,18 +11,17 @@ Tests the entire scanner pipeline from end to end:
 - API endpoints
 """
 
-import tempfile
-import os
 import json
-from pathlib import Path
+import os
+import tempfile
+
 import pytest
 
-from workers.parallel_scanner import ParallelScanner
-from db.connection import get_session, init_db, create_engine
 from db.models import Project, Scan, Vulnerability, Base
 from exporters.sarif import SARIFExporter
-from suppressions.manager import SuppressionManager
 from plugins import PluginManager, WordPressPlugin, PerformancePlugin
+from suppressions.manager import SuppressionManager
+from workers.parallel_scanner import ParallelScanner
 
 
 @pytest.fixture
@@ -82,6 +81,7 @@ function my_function() {
     yield [vuln_file, safe_file, wp_file], tmpdir
 
     import shutil
+
     shutil.rmtree(tmpdir, ignore_errors=True)
 
 
@@ -139,6 +139,7 @@ def test_database_integration(test_php_files, test_db):
     session.flush()
 
     from db.models import ScanStatus
+
     scan = Scan(
         project_id=project.id,
         vuln_types='xss,sql_injection',
@@ -151,6 +152,7 @@ def test_database_integration(test_php_files, test_db):
 
     # Add vulnerabilities
     from db.models import VulnerabilitySeverity
+
     for file_result in results.values():
         for vuln in file_result.get('vulnerabilities', []):
             severity = vuln.get('severity', 'medium').upper()
@@ -340,6 +342,7 @@ def test_full_pipeline_with_all_features(test_php_files, test_db):
     session.flush()
 
     from db.models import ScanStatus
+
     scan = Scan(
         project_id=project.id,
         vuln_types='xss,sql_injection,rce',
@@ -369,13 +372,13 @@ def test_cli_integration(test_php_files):
 
     # Run CLI (updated command structure)
     result = subprocess.run([
-        sys.executable, 'cli.py', 'scan',
-        '--files'] + files + [
-        '--output', output_file,
-        '--no-db',
-        '--no-progress',
-        '--workers', '2',
-    ], capture_output=True, text=True)
+                                sys.executable, 'cli.py', 'scan',
+                                '--files'] + files + [
+                                '--output', output_file,
+                                '--no-db',
+                                '--no-progress',
+                                '--workers', '2',
+                            ], capture_output=True, text=True)
 
     # Check output file was created
     assert os.path.exists(output_file)

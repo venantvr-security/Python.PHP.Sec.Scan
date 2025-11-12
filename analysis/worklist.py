@@ -1,12 +1,13 @@
 # analysis/worklist.py
 """Worklist-based inter-procedural taint analysis using fixpoint iteration."""
 
-from typing import Dict, List, Set, Optional, Tuple
-from dataclasses import dataclass, field
 from collections import deque
+from dataclasses import dataclass, field
+from typing import Dict, List, Set, Optional
+
 from tree_sitter import Node
 
-from analysis.call_graph import CallGraph, CallSite, FunctionDef
+from analysis.call_graph import CallGraph, FunctionDef
 
 
 @dataclass
@@ -231,7 +232,7 @@ class WorklistAnalyzer:
 
         # Check include/require expressions
         if node.type in ['include_expression', 'require_expression',
-                        'include_once_expression', 'require_once_expression']:
+                         'include_once_expression', 'require_once_expression']:
             if self._uses_tainted_param(node, func_def.params, taint_fact.tainted_params):
                 vuln = {
                     'type': 'file_inclusion',

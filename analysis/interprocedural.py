@@ -1,7 +1,8 @@
 # analysis/interprocedural.py
+from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Tuple
-from dataclasses import dataclass
 from tree_sitter import Node
+from functools import lru_cache
 
 from analysis.call_graph import CallGraph, CallSite, FunctionDef
 from analysis.taint_tracker import TaintTracker
@@ -10,20 +11,21 @@ from analysis.taint_tracker import TaintTracker
 @dataclass
 class TaintContext:
     """Taint analysis context for inter-procedural analysis."""
-    tainted_vars: Set[str]  # Variable names
-    tainted_params: Set[int]  # Parameter indices
+    tainted_vars: Set[str] = field(default_factory=set)
+    tainted_params: Set[int] = field(default_factory=set)
     tainted_return: bool = False
 
 
 class InterproceduralAnalyzer:
-    """Inter-procedural taint analysis."""
+    """Inter-procedural taint analysis with optimizations."""
 
     def __init__(self, call_graph: CallGraph, vuln_types: List[str]):
         self.call_graph = call_graph
         self.vuln_types = vuln_types
         self.function_contexts: Dict[str, TaintContext] = {}
         self.visited_functions: Set[str] = set()
-        self.all_results = []
+        self.all_results: List[Dict] = []
+        self._taint_cache: Dict[str, bool] = {}
 
     def analyze(self) -> List[Dict]:
         """Perform inter-procedural analysis on entire call graph."""
@@ -42,6 +44,7 @@ class InterproceduralAnalyzer:
         # tree is already root_node from call_graph
         import tree_sitter_php as tsphp
         from tree_sitter import Parser, Language
+
         PHP_LANGUAGE = Language(tsphp.language_php())
         parser = Parser(PHP_LANGUAGE)
         full_tree = parser.parse(code)
@@ -95,30 +98,42 @@ class InterproceduralAnalyzer:
 
     def _is_tainted_node(self, node: Node, code: bytes) -> bool:
         """Check if node represents tainted data (superglobal access)."""
+        # Cache key based on node position
+        cache_key = f"{node.start_point}:{node.end_point}"
+        if cache_key in self._taint_cache:
+            return self._taint_cache[cache_key]
+
+        result = self._check_taint_recursive(node, code)
+        self._taint_cache[cache_key] = result
+        return result
+
+    def _check_taint_recursive(self, node: Node, code: bytes) -> bool:
+        """Recursive taint check implementation."""
+        SUPERGLOBALS = {'$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_SERVER', '$_SESSION', '$_ENV', '$_FILES'}
+
         if node.type == 'subscript_expression':
             obj_node = node.child_by_field_name('object')
             if obj_node and obj_node.type == 'variable_name':
                 var_name = obj_node.text.decode('utf-8')
-                if var_name in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_SERVER', '$_SESSION']:
+                if var_name in SUPERGLOBALS:
                     return True
+        elif node.type == 'variable_name':
+            var_name = node.text.decode('utf-8')
+            if var_name in SUPERGLOBALS:
+                return True
 
-        # Check for variable that might be assigned from superglobal
-        if node.type == 'variable_name':
-            # This is simplified - in full implementation, track data flow
-            return False
-
-        # Recursively check children
+        # Optimized child iteration
         for child in node.children:
-            if self._is_tainted_node(child, code):
+            if self._check_taint_recursive(child, code):
                 return True
 
         return False
 
     def _analyze_callee_with_taint(
-        self,
-        func_def: FunctionDef,
-        tainted_args: Dict[int, Node],
-        call_site: CallSite
+            self,
+            func_def: FunctionDef,
+            tainted_args: Dict[int, Node],
+            call_site: CallSite
     ) -> List[Dict]:
         """Analyze callee function with specific tainted parameters."""
         vulnerabilities = []
@@ -157,12 +172,12 @@ class InterproceduralAnalyzer:
         return vulnerabilities
 
     def _find_sinks_using_params(
-        self,
-        node: Node,
-        tainted_params: Set[str],
-        code: bytes,
-        func_def: FunctionDef,
-        call_site: CallSite
+            self,
+            node: Node,
+            tainted_params: Set[str],
+            code: bytes,
+            func_def: FunctionDef,
+            call_site: CallSite
     ) -> List[Dict]:
         """Find sink nodes that use tainted parameters."""
         vulnerabilities = []
@@ -201,38 +216,34 @@ class InterproceduralAnalyzer:
 
         return vulnerabilities
 
+    # Sink configuration as class constant
+    SINKS_MAP = {
+        'function_call_expression': {
+            'eval': 'rce', 'system': 'rce', 'exec': 'rce', 'shell_exec': 'rce',
+            'passthru': 'rce', 'popen': 'rce', 'proc_open': 'rce',
+            'mysqli_query': 'sql_injection', 'mysql_query': 'sql_injection',
+            'pg_query': 'sql_injection', 'mssql_query': 'sql_injection',
+            'unserialize': 'deserialization', 'yaml_parse': 'deserialization',
+        },
+        'echo_statement': 'xss',
+        'include_expression': 'file_inclusion',
+        'include_once_expression': 'file_inclusion',
+        'require_expression': 'file_inclusion',
+        'require_once_expression': 'file_inclusion',
+    }
+
     def _check_sink_node(self, node: Node, tainted_params: Set[str], code: bytes) -> Optional[str]:
         """Check if node is a sink using tainted parameter."""
-        # Check common sink types
-        sinks_map = {
-            'function_call_expression': {
-                'eval': 'rce',
-                'system': 'rce',
-                'exec': 'rce',
-                'shell_exec': 'rce',
-                'passthru': 'rce',
-                'mysqli_query': 'sql_injection',
-                'mysql_query': 'sql_injection',
-            },
-            'echo_statement': 'xss',
-            'include_expression': 'file_inclusion',
-            'include_once_expression': 'file_inclusion',
-            'require_expression': 'file_inclusion',
-            'require_once_expression': 'file_inclusion',
-        }
-
         if node.type == 'function_call_expression':
             func_node = node.child_by_field_name('function')
             if func_node and func_node.type == 'name':
                 func_name = func_node.text.decode('utf-8')
-                if func_name in sinks_map[node.type]:
-                    # Check if arguments use tainted params
+                if func_name in self.SINKS_MAP[node.type]:
                     if self._args_use_params(node, tainted_params):
-                        return sinks_map[node.type][func_name]
-
-        elif node.type in sinks_map:
+                        return self.SINKS_MAP[node.type][func_name]
+        elif node.type in self.SINKS_MAP:
             if self._node_uses_params(node, tainted_params):
-                return sinks_map[node.type]
+                return self.SINKS_MAP[node.type]
 
         return None
 

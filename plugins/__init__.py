@@ -1,11 +1,11 @@
 # plugins/__init__.py
 """Plugin system for extending scanner functionality."""
 
-import os
 import importlib
 import inspect
-from typing import List, Dict, Any, Optional
+import os
 from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Optional
 
 
 class ScannerPlugin(ABC):
@@ -88,6 +88,7 @@ class PerformancePlugin(ScannerPlugin):
     def on_scan_start(self, scan_context: Dict[str, Any]):
         """Start timing."""
         from datetime import datetime
+
         self.start_time = datetime.now()
 
     def on_file_scanned(self, file_path: str, results: Dict[str, Any]):
@@ -98,6 +99,7 @@ class PerformancePlugin(ScannerPlugin):
     def on_scan_complete(self, scan_results: Dict[str, Any]):
         """Add performance stats."""
         from datetime import datetime
+
         if self.start_time:
             duration = (datetime.now() - self.start_time).total_seconds()
             scan_results['performance'] = {
@@ -130,8 +132,9 @@ class NotificationPlugin(ScannerPlugin):
 
         try:
             import requests
+
             critical = sum(1 for v in scan_results.get('vulnerabilities', [])
-                          if v.get('severity') == 'critical')
+                           if v.get('severity') == 'critical')
 
             payload = {
                 'text': f"🔒 Security Scan Complete\\n"
@@ -168,8 +171,8 @@ class PluginManager:
                     module = importlib.import_module(f'plugins.{module_name}')
                     for name, obj in inspect.getmembers(module):
                         if (inspect.isclass(obj) and
-                            issubclass(obj, ScannerPlugin) and
-                            obj != ScannerPlugin):
+                                issubclass(obj, ScannerPlugin) and
+                                obj != ScannerPlugin):
                             self.register(obj())
                 except Exception as e:
                     print(f"Error loading plugin {module_name}: {e}")

@@ -15,59 +15,50 @@ logger = logging.getLogger(__name__)
 
 
 class ParallelScanner:
-    """Multi-threaded scanner for parallel file analysis."""
+    """Optimized multi-threaded scanner for parallel file analysis."""
 
     def __init__(
-        self,
-        vuln_types: List[str],
-        max_workers: Optional[int] = None,
-        use_cache: bool = True,
-        verbose: bool = False,
-        progress_callback: Optional[Callable[[int, int, str], None]] = None,
-        plugin_manager=None
+            self,
+            vuln_types: List[str],
+            max_workers: Optional[int] = None,
+            use_cache: bool = True,
+            verbose: bool = False,
+            progress_callback: Optional[Callable[[int, int, str], None]] = None,
+            plugin_manager=None
     ):
-        """
-        Initialize parallel scanner.
-
-        Args:
-            vuln_types: List of vulnerability types to scan for
-            max_workers: Number of worker threads (default: CPU count)
-            use_cache: Enable AST caching
-            verbose: Enable verbose logging
-            progress_callback: Callback for progress updates (completed, total, filename)
-            plugin_manager: Optional PluginManager instance
-        """
+        """Initialize parallel scanner with optimizations."""
         self.vuln_types = vuln_types
-        self.max_workers = max_workers or min(os.cpu_count() or 4, 16)
+        self.max_workers = max_workers or min(os.cpu_count() or 4, 32)
         self.use_cache = use_cache
         self.verbose = verbose
         self.progress_callback = progress_callback
         self.plugin_manager = plugin_manager
-
-        if use_cache:
-            self.cache = ASTCache()
-        else:
-            self.cache = None
-
+        self.cache = ASTCache() if use_cache else None
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO if verbose else logging.WARNING)
+        self._hash_cache: Dict[str, str] = {}
 
     def _compute_file_hash(self, filepath: str) -> str:
-        """Compute SHA256 hash of file contents."""
-        hasher = hashlib.sha256()
+        """Compute SHA256 hash with caching."""
+        if filepath in self._hash_cache:
+            return self._hash_cache[filepath]
+
         try:
+            hasher = hashlib.sha256()
             with open(filepath, 'rb') as f:
-                for chunk in iter(lambda: f.read(4096), b""):
+                while chunk := f.read(8192):
                     hasher.update(chunk)
-            return hasher.hexdigest()
+            file_hash = hasher.hexdigest()
+            self._hash_cache[filepath] = file_hash
+            return file_hash
         except Exception as e:
             self.logger.error(f"Error hashing {filepath}: {e}")
             return ""
 
     def _scan_single_file(
-        self,
-        filepath: str,
-        file_hash: Optional[str] = None
+            self,
+            filepath: str,
+            file_hash: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Scan a single file (worker function).
@@ -136,66 +127,54 @@ class ParallelScanner:
             }
 
     def scan_files(
-        self,
-        filepaths: List[str],
-        progress_tracker: Optional[ProgressTracker] = None,
-        scan_context: Optional[Dict[str, Any]] = None
+            self,
+            filepaths: List[str],
+            progress_tracker: Optional[ProgressTracker] = None,
+            scan_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Dict[str, Any]]:
-        """
-        Scan multiple files in parallel.
-
-        Args:
-            filepaths: List of PHP file paths
-            progress_tracker: Optional progress tracker
-            scan_context: Context dict for plugins
-
-        Returns:
-            Dict mapping filepath to scan results
-        """
+        """Scan multiple files in parallel with optimizations."""
         results = {}
         total_files = len(filepaths)
 
+        if total_files == 0:
+            return results
+
         self.logger.info(f"Scanning {total_files} files with {self.max_workers} workers")
 
-        # Trigger plugin scan start
         if self.plugin_manager and scan_context:
             self.plugin_manager.trigger_scan_start(scan_context)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Submit all tasks
-            future_to_file = {
-                executor.submit(self._scan_single_file, fp): fp
-                for fp in filepaths
-            }
+            future_to_file = {executor.submit(self._scan_single_file, fp): fp for fp in filepaths}
 
-            # Process completed tasks
             completed = 0
+            cache_hits = 0
+
             for future in as_completed(future_to_file):
                 filepath = future_to_file[future]
                 try:
                     result = future.result()
                     results[filepath] = result
 
-                    # Trigger plugin file scanned
+                    if result.get('cached'):
+                        cache_hits += 1
+
                     if self.plugin_manager:
                         self.plugin_manager.trigger_file_scanned(filepath, result)
 
                     completed += 1
 
-                    # Update progress
                     if progress_tracker:
                         progress_tracker.update(completed, total_files, filepath)
 
                     if self.progress_callback:
                         self.progress_callback(completed, total_files, filepath)
 
-                    # Log progress
-                    if completed % 10 == 0 or completed == total_files:
-                        cache_hits = sum(1 for r in results.values() if r.get('cached'))
+                    # Log every 50 files or at completion
+                    if completed % 50 == 0 or completed == total_files:
                         self.logger.info(
-                            f"Progress: {completed}/{total_files} "
-                            f"({completed * 100 // total_files}%) - "
-                            f"Cache hits: {cache_hits}"
+                            f"Progress: {completed}/{total_files} ({completed * 100 // total_files}%) "
+                            f"- Cache: {cache_hits}/{completed}"
                         )
 
                 except Exception as e:
@@ -206,18 +185,20 @@ class ParallelScanner:
                         'warnings': [],
                         'error': str(e),
                     }
+                    completed += 1
 
-        # Trigger plugin scan complete
         if self.plugin_manager:
-            scan_results = {'files': results, 'statistics': self.get_statistics(results)}
-            self.plugin_manager.trigger_scan_complete(scan_results)
+            self.plugin_manager.trigger_scan_complete({
+                'files': results,
+                'statistics': self.get_statistics(results)
+            })
 
         return results
 
     def scan_directory(
-        self,
-        directory: str,
-        progress_tracker: Optional[ProgressTracker] = None
+            self,
+            directory: str,
+            progress_tracker: Optional[ProgressTracker] = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Scan all PHP files in a directory recursively.

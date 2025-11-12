@@ -1,9 +1,11 @@
 # tests/test_interprocedural.py
 import os
 import tempfile
+
 import tree_sitter_php as tsphp
 from tree_sitter import Parser, Language
-from analysis.call_graph import CallGraphBuilder, CallGraph
+
+from analysis.call_graph import CallGraphBuilder
 from analysis.interprocedural import InterproceduralAnalyzer
 
 PHP_LANGUAGE = Language(tsphp.language_php())

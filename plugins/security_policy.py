@@ -3,6 +3,7 @@
 
 import sys
 from typing import Dict, Any, Optional
+
 from plugins import ScannerPlugin
 
 
@@ -10,11 +11,11 @@ class SecurityPolicyPlugin(ScannerPlugin):
     """Enforce security policies and fail builds on violations."""
 
     def __init__(
-        self,
-        max_critical: int = 0,
-        max_high: int = 5,
-        max_total: int = 50,
-        fail_on_violation: bool = True
+            self,
+            max_critical: int = 0,
+            max_high: int = 5,
+            max_total: int = 50,
+            fail_on_violation: bool = True
     ):
         super().__init__()
         self.name = "Security Policy Enforcer"
@@ -66,12 +67,12 @@ class SecurityPolicyPlugin(ScannerPlugin):
             )
 
         if violations:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("❌ SECURITY POLICY VIOLATIONS")
-            print("="*60)
+            print("=" * 60)
             for violation in violations:
                 print(f"  • {violation}")
-            print("="*60)
+            print("=" * 60)
 
             if self.fail_on_violation:
                 print("\n🛑 Build failed due to security policy violations")

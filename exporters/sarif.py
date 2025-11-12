@@ -1,18 +1,19 @@
 # exporters/sarif.py
 """SARIF (Static Analysis Results Interchange Format) exporter."""
 
-import json
-from typing import List, Dict
-from datetime import datetime, timezone
 import hashlib
+import json
+from datetime import datetime, timezone
+from typing import List, Dict
 
 
 class SARIFExporter:
     """Export vulnerabilities in SARIF 2.1.0 format."""
 
-    def __init__(self, tool_name: str = "PHP-Security-Scanner", tool_version: str = "2.1.0"):
+    def __init__(self, tool_name: str = "PHP-Security-Scanner", tool_version: str = "2.3.0"):
         self.tool_name = tool_name
         self.tool_version = tool_version
+        self._rule_cache: Dict[str, Dict] = {}
 
     def export(self, vulnerabilities: List[Dict], project_root: str = ".") -> Dict:
         """Convert vulnerabilities to SARIF format."""
@@ -48,31 +49,25 @@ class SARIFExporter:
             json.dump(sarif, f, indent=2)
 
     def _generate_rules(self, vulnerabilities: List[Dict]) -> List[Dict]:
-        """Generate SARIF rules from vulnerability types."""
+        """Generate SARIF rules from vulnerability types with caching."""
         vuln_types = {}
         for vuln in vulnerabilities:
             vtype = vuln['type']
             if vtype not in vuln_types:
-                vuln_types[vtype] = {
-                    "id": vtype,
-                    "name": vtype.replace('_', ' ').title(),
-                    "shortDescription": {
-                        "text": self._get_description(vtype)
-                    },
-                    "fullDescription": {
-                        "text": self._get_full_description(vtype)
-                    },
-                    "help": {
-                        "text": self._get_help(vtype)
-                    },
-                    "defaultConfiguration": {
-                        "level": self._get_level(vuln.get('severity', 'medium'))
-                    },
-                    "properties": {
-                        "tags": self._get_tags(vtype),
-                        "precision": "high"
+                if vtype in self._rule_cache:
+                    vuln_types[vtype] = self._rule_cache[vtype]
+                else:
+                    rule = {
+                        "id": vtype,
+                        "name": vtype.replace('_', ' ').title(),
+                        "shortDescription": {"text": self._get_description(vtype)},
+                        "fullDescription": {"text": self._get_full_description(vtype)},
+                        "help": {"text": self._get_help(vtype)},
+                        "defaultConfiguration": {"level": self._get_level(vuln.get('severity', 'medium'))},
+                        "properties": {"tags": self._get_tags(vtype), "precision": "high"}
                     }
-                }
+                    self._rule_cache[vtype] = rule
+                    vuln_types[vtype] = rule
 
         return list(vuln_types.values())
 

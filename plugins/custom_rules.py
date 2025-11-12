@@ -2,6 +2,7 @@
 """Example plugin for adding custom security rules."""
 
 from typing import Dict, Any, Optional
+
 from plugins import ScannerPlugin
 
 

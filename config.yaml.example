@@ -1,0 +1,103 @@
+# PHP Security Scanner - Production Configuration
+# Copy to config.yaml and adjust for your environment
+
+scan:
+  # Vulnerability types to detect
+  vulnerability_types:
+    - sql_injection
+    - xss
+    - rce
+    - file_inclusion
+    - command_injection
+    - path_traversal
+    - deserialization
+    - xxe
+    - ssrf
+    - open_redirect
+
+  # Maximum file size to scan (bytes)
+  max_file_size: 10485760  # 10MB
+
+  # Patterns to exclude from scanning
+  exclude_patterns:
+    - vendor/
+    - node_modules/
+    - cache/
+    - .git/
+    - .venv/
+
+  # File extensions to scan
+  file_extensions:
+    - .php
+
+  # Timeout per file (seconds)
+  timeout_per_file: 30
+
+cache:
+  # Enable caching
+  enabled: true
+
+  # Cache backend: 'disk' or 'redis'
+  backend: disk
+
+  # Cache TTL (seconds)
+  ttl: 86400  # 24 hours
+
+  # Cache size limit (bytes)
+  size_limit: 1073741824  # 1GB
+
+  # Redis URL (if using redis backend)
+  redis_url: null
+
+database:
+  # Enable database storage
+  enabled: true
+
+  # Database URL
+  url: sqlite:///scanner.db
+  # For PostgreSQL: postgresql://user:pass@localhost/scanner
+  # For MySQL: mysql://user:pass@localhost/scanner
+
+  # Connection pool settings
+  pool_size: 5
+  max_overflow: 10
+
+api:
+  # Enable REST API
+  enabled: true
+
+  # API host
+  host: 0.0.0.0
+
+  # API port
+  port: 8000
+
+  # Number of uvicorn workers
+  workers: 4
+
+  # CORS origins
+  cors_origins:
+    - "*"
+
+  # Rate limit
+  rate_limit: "100/minute"
+
+performance:
+  # Maximum parallel workers
+  max_workers: 32
+
+  # File batch size
+  chunk_size: 100
+
+  # Use adaptive worker adjustment
+  use_adaptive_workers: true
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+
+  # Log format: 'json' or 'text'
+  format: json
+
+  # Log file path (null for stdout only)
+  file: null

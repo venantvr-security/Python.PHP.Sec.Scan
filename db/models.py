@@ -1,7 +1,6 @@
 # db/models.py
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
-from typing import Optional
 
 from sqlalchemy import (
     Column, Integer, String, Text, DateTime, ForeignKey,

@@ -4,17 +4,16 @@ PHP Security Scanner - Web Interface
 Flask-based interactive dashboard for scan management.
 """
 
-from flask import Flask, render_template, request, jsonify, send_file
 import os
-import json
 from pathlib import Path
-from datetime import datetime
+
+from flask import Flask, render_template, request, jsonify
 
 from db.connection import get_session
 from db.models import Project, Scan, Vulnerability, ScanStatus
-from workers.parallel_scanner import ParallelScanner
 from exporters.sarif import SARIFExporter
 from plugins import PluginManager, WordPressPlugin, PerformancePlugin
+from workers.parallel_scanner import ParallelScanner
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -385,15 +384,15 @@ if __name__ == '__main__':
 </body>
 </html>''')
 
-    print("="*60)
+    print("=" * 60)
     print("PHP Security Scanner - Web Interface")
-    print("="*60)
+    print("=" * 60)
     print("\n✓ Server starting on http://127.0.0.1:5000")
     print("\nFeatures:")
     print("  • Interactive scan launcher")
     print("  • Real-time results viewing")
     print("  • Project management")
     print("  • SARIF/JSON export")
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
 
     app.run(debug=True, host='0.0.0.0', port=5000)

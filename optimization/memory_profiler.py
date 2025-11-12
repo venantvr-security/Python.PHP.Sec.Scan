@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Memory profiling utilities."""
 
-import tracemalloc
 import linecache
+import tracemalloc
 from typing import List, Tuple
 
 

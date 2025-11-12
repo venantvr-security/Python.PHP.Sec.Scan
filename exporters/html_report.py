@@ -1,9 +1,9 @@
 # exporters/html_report.py
 """HTML report generator with interactive features."""
 
-from typing import List, Dict
-from datetime import datetime
 import json
+from datetime import datetime
+from typing import List, Dict
 
 
 class HTMLReportGenerator:
@@ -12,38 +12,28 @@ class HTMLReportGenerator:
     def __init__(self):
         self.template = self._get_template()
 
-    def generate(self, scan_data: Dict, vulnerabilities: List[Dict], output_file: str):
-        """Generate HTML report."""
-        # Group vulnerabilities by type
+    def generate(self, vulnerabilities: List[Dict], project_name: str = "Unknown", output_file: str = None) -> str:
+        """Generate optimized HTML report."""
         by_type = {}
         by_severity = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
-        by_file = {}
 
         for vuln in vulnerabilities:
             vtype = vuln['type']
             severity = vuln.get('severity', 'medium')
-            file_path = vuln['file']
-
             by_type[vtype] = by_type.get(vtype, 0) + 1
             by_severity[severity] = by_severity.get(severity, 0) + 1
 
-            if file_path not in by_file:
-                by_file[file_path] = []
-            by_file[file_path].append(vuln)
-
-        # Generate vulnerability rows
-        vuln_rows = []
-        for vuln in vulnerabilities:
-            severity_class = f"severity-{vuln.get('severity', 'medium')}"
-            vuln_rows.append(f"""
-                <tr class="{severity_class}">
-                    <td><span class="badge {severity_class}">{vuln.get('severity', 'medium')}</span></td>
-                    <td><code>{vuln['type']}</code></td>
-                    <td><code>{vuln['file']}</code></td>
-                    <td>{vuln['line']}</td>
-                    <td><code>{vuln.get('sink', 'N/A')}</code></td>
-                </tr>
-            """)
+        # Generate vulnerability rows efficiently
+        vuln_rows = [
+            f'<tr class="severity-{vuln.get("severity", "medium")}">'
+            f'<td><span class="badge severity-{vuln.get("severity", "medium")}">{vuln.get("severity", "medium")}</span></td>'
+            f'<td><code>{vuln["type"]}</code></td>'
+            f'<td><code>{vuln.get("file", "N/A")}</code></td>'
+            f'<td>{vuln.get("line", 0)}</td>'
+            f'<td><code>{vuln.get("sink", "N/A")}</code></td>'
+            f'</tr>'
+            for vuln in vulnerabilities
+        ]
 
         # Generate summary cards
         summary_html = f"""
@@ -72,17 +62,20 @@ class HTMLReportGenerator:
 
         # Fill template
         html = self.template.format(
-            project_name=scan_data.get('project', 'Unknown'),
+            project_name=project_name,
             scan_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            total_files=scan_data.get('total_files', 0),
+            total_files=len(set(v.get('file') for v in vulnerabilities)),
             total_vulnerabilities=len(vulnerabilities),
             summary_cards=summary_html,
-            vulnerability_rows='\n'.join(vuln_rows),
+            vulnerability_rows=''.join(vuln_rows),
             chart_data=type_chart_data
         )
 
-        with open(output_file, 'w') as f:
-            f.write(html)
+        if output_file:
+            with open(output_file, 'w') as f:
+                f.write(html)
+
+        return html
 
     def _get_template(self) -> str:
         """Get HTML template."""

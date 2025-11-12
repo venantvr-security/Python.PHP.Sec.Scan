@@ -6,22 +6,20 @@ Consolidated command-line interface with all features.
 import argparse
 import json
 import sys
-import os
 from pathlib import Path
-from datetime import datetime
 
 from db.connection import get_session, init_db
-from db.models import Project, Scan, Vulnerability, Warning, File as FileModel, ScanStatus
+from db.models import Project, Scan, Vulnerability, ScanStatus
+from exporters.html_report import HTMLReportGenerator
+from exporters.sarif import SARIFExporter
+from plugins import PluginManager, WordPressPlugin, PerformancePlugin
+from suppressions.manager import SuppressionManager
 from workers.parallel_scanner import ParallelScanner
 from workers.progress_tracker import ProgressTracker
-from plugins import PluginManager, WordPressPlugin, PerformancePlugin
-from exporters.sarif import SARIFExporter
-from exporters.html_report import HTMLReportGenerator
-from suppressions.manager import SuppressionManager
 
 
 def cmd_scan(args):
-    """Run security scan."""
+    """Run security scan with optimizations."""
     if not args.files and not args.dir:
         print("Error: Either --files or --dir must be specified", file=sys.stderr)
         return 1
@@ -44,10 +42,11 @@ def cmd_scan(args):
 
     progress = None if args.no_progress else ProgressTracker()
 
-    print(f"Starting scan with {scanner.max_workers} workers...")
-    print(f"Vulnerability types: {', '.join(args.vuln_types)}")
-    print(f"Caching: {'disabled' if args.no_cache else 'enabled'}")
-    print(f"Plugins: {'enabled' if args.enable_plugins else 'disabled'}")
+    print(f"Scan: {scanner.max_workers} workers")
+    print(f"Types: {', '.join(args.vuln_types)}")
+    print(f"Cache: {'OFF' if args.no_cache else 'ON'}")
+    if args.enable_plugins:
+        print(f"Plugins: ON")
 
     if args.dir:
         root_path = args.dir
@@ -61,19 +60,18 @@ def cmd_scan(args):
 
     stats = scanner.get_statistics(results)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 50)
     print("SCAN SUMMARY")
-    print("="*60)
-    print(f"Total files:          {stats['total_files']}")
-    print(f"Total vulnerabilities: {stats['total_vulnerabilities']}")
-    print(f"Total warnings:       {stats['total_warnings']}")
-    print(f"Cache hit rate:       {stats['cache_hit_rate']:.1%}")
-    print(f"Total time:           {stats['total_analysis_time']:.2f}s")
-    print(f"Avg time per file:    {stats['average_time_per_file']:.3f}s")
+    print("=" * 50)
+    print(f"Files:         {stats['total_files']}")
+    print(f"Vulnerabilities: {stats['total_vulnerabilities']}")
+    print(f"Warnings:      {stats['total_warnings']}")
+    print(f"Cache hits:    {stats['cache_hits']}/{stats['total_files']} ({stats['cache_hit_rate']:.1%})")
+    print(f"Time:          {stats['total_analysis_time']:.2f}s (avg: {stats['average_time_per_file']:.3f}s/file)")
 
     if stats['vulnerabilities_by_type']:
-        print("\nVulnerabilities by type:")
-        for vuln_type, count in sorted(stats['vulnerabilities_by_type'].items()):
+        print("\nBy type:")
+        for vuln_type, count in sorted(stats['vulnerabilities_by_type'].items(), key=lambda x: -x[1]):
             print(f"  {vuln_type}: {count}")
 
     if args.output:
@@ -139,14 +137,16 @@ def cmd_scan(args):
 def cmd_export(args):
     """Export scan results."""
     with get_session() as session:
-        scan = session.query(Scan).filter_by(id=int(args.scan_id) if args.scan_id != 'latest' else None).first() if args.scan_id != 'latest' else session.query(Scan).order_by(Scan.created_at.desc()).first()
+        scan = session.query(Scan).filter_by(id=int(args.scan_id) if args.scan_id != 'latest' else None).first() if args.scan_id != 'latest' else session.query(
+            Scan).order_by(Scan.created_at.desc()).first()
 
         if not scan:
             print("Error: Scan not found", file=sys.stderr)
             return 1
 
         vulns = session.query(Vulnerability).filter_by(scan_id=scan.id).all()
-        vuln_dicts = [{'type': v.vuln_type, 'file': v.filepath, 'line': v.line_number, 'severity': v.severity.value if hasattr(v.severity, 'value') else 'medium', 'sink': v.sink_function, 'variable': v.tainted_variable, 'trace': v.trace} for v in vulns]
+        vuln_dicts = [{'type': v.vuln_type, 'file': v.filepath, 'line': v.line_number, 'severity': v.severity.value if hasattr(v.severity, 'value') else 'medium',
+                       'sink': v.sink_function, 'variable': v.tainted_variable, 'trace': v.trace} for v in vulns]
 
         if args.format == 'sarif':
             SARIFExporter().export_to_file(vuln_dicts, args.output)
@@ -199,6 +199,7 @@ def cmd_stats(args):
 def cmd_cache(args):
     """Manage cache."""
     from cache.ast_cache import ASTCache
+
     cache = ASTCache()
     if args.cache_cmd == 'clear':
         cache.cache.clear()
@@ -222,7 +223,9 @@ def cmd_projects(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='PHP Security Scanner', epilog='Examples:\n  %(prog)s scan --dir /app\n  %(prog)s export --scan-id 1 --format sarif -o report.sarif', formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description='PHP Security Scanner',
+                                     epilog='Examples:\n  %(prog)s scan --dir /app\n  %(prog)s export --scan-id 1 --format sarif -o report.sarif',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     subparsers = parser.add_subparsers(dest='command')
 
     parser.add_argument('--init-db', action='store_true', help='Initialize database')

@@ -1,10 +1,11 @@
 # plugins/metrics_exporter.py
 """Plugin for exporting metrics to monitoring systems (Prometheus/Grafana)."""
 
-import os
 import json
+import os
 from datetime import datetime, timezone
 from typing import Dict, Any
+
 from plugins import ScannerPlugin
 
 

@@ -9,15 +9,13 @@ Useful for scanning all projects in an organization.
 import argparse
 import json
 import os
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Dict
 
-from workers.parallel_scanner import ParallelScanner
 from exporters.sarif import SARIFExporter
 from suppressions.manager import SuppressionManager
-from db.connection import get_session, init_db
-from db.models import Project, Scan, Vulnerability, ScanStatus
+from workers.parallel_scanner import ParallelScanner
 
 
 def find_projects(root_dir: str, indicators: List[str] = None) -> List[Dict]:
@@ -73,15 +71,15 @@ def detect_project_type(project_path: Path) -> str:
 
 
 def scan_project(
-    project: Dict,
-    scanner: ParallelScanner,
-    suppression_manager: SuppressionManager
+        project: Dict,
+        scanner: ParallelScanner,
+        suppression_manager: SuppressionManager
 ) -> Dict:
     """Scan a single project."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Scanning: {project['name']} ({project['type']})")
     print(f"Path: {project['path']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Find PHP files
     php_files = [str(f) for f in Path(project['path']).rglob('*.php')]
@@ -312,8 +310,8 @@ def main():
     parser.add_argument('--workers', type=int, default=12, help='Worker threads per project')
     parser.add_argument('--no-cache', action='store_true', help='Disable caching')
     parser.add_argument('--vuln-types', nargs='+',
-                       default=['sql_injection', 'xss', 'rce', 'file_inclusion'],
-                       help='Vulnerability types')
+                        default=['sql_injection', 'xss', 'rce', 'file_inclusion'],
+                        help='Vulnerability types')
     parser.add_argument('--save-to-db', action='store_true', help='Save to database')
 
     args = parser.parse_args()
@@ -359,9 +357,9 @@ def main():
     save_batch_results(results, args.output)
 
     # Print final summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("BATCH SCAN COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Projects scanned: {len(results)}")
     print(f"Total vulnerabilities: {sum(len(r.get('vulnerabilities', [])) for r in results)}")
 
@@ -370,4 +368,5 @@ def main():
 
 if __name__ == '__main__':
     import sys
+
     sys.exit(main())

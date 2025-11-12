@@ -1,36 +1,26 @@
 # cache/ast_cache.py
-import os
 import logging
+import os
 from typing import Any, Optional
+
 from diskcache import Cache
 
 logger = logging.getLogger(__name__)
 
 
 class ASTCache:
-    """
-    Cache for AST analysis results.
+    """Optimized cache for AST analysis results with LRU eviction."""
 
-    Uses diskcache for persistent, disk-based caching.
-    Can be swapped to Redis for distributed caching.
-    """
-
-    def __init__(self, cache_dir: Optional[str] = None, ttl: int = 86400):
-        """
-        Initialize cache.
-
-        Args:
-            cache_dir: Directory for cache storage (default: ./cache_data)
-            ttl: Time-to-live in seconds (default: 24 hours)
-        """
+    def __init__(self, cache_dir: Optional[str] = None, ttl: int = 86400, size_limit: int = 1024**3):
+        """Initialize cache with size limit."""
         if cache_dir is None:
             cache_dir = os.getenv('CACHE_DIR', './cache_data')
 
         self.cache_dir = cache_dir
         self.ttl = ttl
-        self.cache = Cache(cache_dir)
+        self.cache = Cache(cache_dir, size_limit=size_limit, eviction_policy='least-recently-used')
 
-        logger.info(f"AST Cache initialized: {cache_dir}")
+        logger.info(f"AST Cache: {cache_dir} (limit: {size_limit // 1024**2}MB)")
 
     def get(self, key: str) -> Optional[Any]:
         """
@@ -91,16 +81,22 @@ class ASTCache:
             return False
 
     def stats(self) -> dict:
-        """Get cache statistics."""
+        """Get detailed cache statistics."""
         try:
+            stats_tuple = self.cache.stats(enable=True)
+            # diskcache.Cache.stats() returns (hits, misses)
+            hits, misses = stats_tuple if isinstance(stats_tuple, tuple) else (0, 0)
             return {
-                'size': len(self.cache),
-                'volume': self.cache.volume(),
+                'entries': len(self.cache),
+                'size': self.cache.volume(),
+                'hits': hits,
+                'misses': misses,
+                'hit_rate': hits / max(hits + misses, 1),
                 'directory': self.cache_dir,
             }
         except Exception as e:
             logger.error(f"Cache stats error: {e}")
-            return {}
+            return {'entries': len(self.cache), 'size': 0, 'directory': self.cache_dir}
 
     def close(self):
         """Close cache connection."""

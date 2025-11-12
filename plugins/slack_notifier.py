@@ -2,8 +2,8 @@
 """Plugin for sending notifications to Slack."""
 
 import os
-import json
 from typing import Dict, Any, Optional
+
 from plugins import ScannerPlugin
 
 
@@ -156,6 +156,7 @@ class SlackNotifierPlugin(ScannerPlugin):
         """Send payload to Slack webhook."""
         try:
             import requests
+
             response = requests.post(
                 self.webhook_url,
                 json=payload,

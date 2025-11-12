@@ -10,6 +10,7 @@ Advanced static analysis tool for PHP security vulnerabilities using taint analy
 ## Features
 
 ### Core Analysis
+
 - **Taint Tracking**: Intra-procedural dataflow analysis
 - **Call Graph**: Inter-procedural analysis infrastructure
 - **7 Vulnerability Types**: SQL injection, XSS, RCE, File inclusion, Command injection, Path traversal, Auth bypass
@@ -17,6 +18,7 @@ Advanced static analysis tool for PHP security vulnerabilities using taint analy
 - **Custom Rules**: YAML-based DSL for organization-specific checks
 
 ### Production Features
+
 - **Multi-threaded Scanning**: 12 workers (10x faster)
 - **AST Caching**: 80%+ hit rate, 20x speedup on incremental scans
 - **Database Backend**: SQLite/PostgreSQL with full history
@@ -26,6 +28,7 @@ Advanced static analysis tool for PHP security vulnerabilities using taint analy
 - **Plugin System**: Extensible hooks for custom analysis
 
 ### Enterprise
+
 - **Docker Deployment**: Multi-service orchestration
 - **CI/CD Integration**: GitHub Actions, GitLab CI
 - **Batch Scanning**: Multi-project analysis with consolidated reports
@@ -60,37 +63,36 @@ python web_interface.py
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Entry Points                         │
-├──────────────┬──────────────┬──────────────────────────┤
-│   cli.py     │  web_app.py  │  api/main.py (FastAPI)  │
-└──────────────┴──────────────┴──────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────┐
-│              Core Scanner (workers/parallel_scanner.py)  │
-│  • Multi-threading  • Plugin hooks  • Progress tracking │
-└───────────┬─────────────────┬───────────────────────────┘
-            │                 │
-            ▼                 ▼
-┌───────────────────┐  ┌──────────────┐  ┌─────────────┐
-│  Analysis Engine  │  │   Caching    │  │   Plugins   │
-├───────────────────┤  ├──────────────┤  ├─────────────┤
-│ • Taint Tracker   │  │ • AST Cache  │  │ • WordPress │
-│ • Call Graph      │  │ • Redis L2   │  │ • Perf Mon  │
-│ • Interprocedural │  │ • 80%+ hits  │  │ • Slack     │
-└───────────────────┘  └──────────────┘  │ • Policies  │
-                                         └─────────────┘
-            │
-            ▼
-┌─────────────────────────────────────────────────────────┐
-│                Storage & Export                         │
-├──────────────┬──────────────┬──────────────────────────┤
-│  Database    │ Suppressions │  SARIF/JSON/HTML/Prom    │
-│  SQLite/PG   │ YAML + audit │  Multi-format export     │
-└──────────────┴──────────────┴──────────────────────────┘
-```
+**Entry Points**: CLI, Web Interface, REST API
+- `cli.py` - Command-line interface
+- `web_app.py` - Interactive web dashboard
+- `api/main.py` - FastAPI REST endpoints
+
+**Core Scanner** (`workers/parallel_scanner.py`)
+- Multi-threaded scanning (12 workers default)
+- Plugin hook system for extensibility
+- Real-time progress tracking
+
+**Analysis Engine**
+- Taint Tracker: Intra-procedural dataflow analysis
+- Call Graph: Inter-procedural analysis infrastructure
+- Interprocedural: Function parameter/return tracking
+
+**Caching Layer**
+- AST Cache: Disk-based with 80%+ hit rates
+- Redis L2: Optional distributed caching
+- 20x speedup on incremental scans
+
+**Plugin System**
+- WordPress: Framework-specific analysis
+- Performance Monitor: Scan optimization
+- Slack: Team notifications
+- Security Policies: CI/CD enforcement
+
+**Storage & Export**
+- Database: SQLite/PostgreSQL with scan history
+- Suppressions: YAML-based with audit trail
+- Export: SARIF, JSON, HTML, Prometheus metrics
 
 ## Usage
 
@@ -185,6 +187,7 @@ print(f"Found {stats['total_vulnerabilities']} vulnerabilities")
 ## Plugin System
 
 ### Built-in Plugins
+
 - **WordPress**: Detects WP projects, tracks hooks/actions
 - **Performance**: Monitors scan time, identifies slow files
 - **Metrics Exporter**: Prometheus/JSON metrics
@@ -229,13 +232,13 @@ python scripts/batch_scan.py /path/to/projects --output batch_results/
 
 ## Performance
 
-| Files | Workers | Cache | Time  | Throughput |
-|-------|---------|-------|-------|------------|
-| 100   | 1       | No    | 30s   | 3 f/s      |
-| 100   | 12      | No    | 3s    | 33 f/s     |
-| 100   | 12      | Yes   | 1s    | 100 f/s    |
-| 1,000 | 12      | No    | 5m    | 3.3 f/s    |
-| 1,000 | 12      | Yes   | 5s    | 200 f/s    |
+| Files | Workers | Cache | Time | Throughput |
+|-------|---------|-------|------|------------|
+| 100   | 1       | No    | 30s  | 3 f/s      |
+| 100   | 12      | No    | 3s   | 33 f/s     |
+| 100   | 12      | Yes   | 1s   | 100 f/s    |
+| 1,000 | 12      | No    | 5m   | 3.3 f/s    |
+| 1,000 | 12      | Yes   | 5s   | 200 f/s    |
 
 Run benchmarks: `python benchmarks/benchmark_performance.py`
 
@@ -372,18 +375,21 @@ mysqli_query($conn, $query);  // ✓ No vulnerability
 ## Roadmap
 
 ### Phase 3: Advanced Analysis
+
 - [ ] Symbolic execution
 - [ ] Abstract interpretation
 - [ ] Alias analysis
 - [ ] Object sensitivity
 
 ### Phase 4: Intelligence
+
 - [ ] ML-based prioritization
 - [ ] Historical trend analysis
 - [ ] Auto-fix suggestions
 - [ ] IDE integration (LSP)
 
 ### Phase 5: Enterprise
+
 - [ ] Multi-tenant support
 - [ ] RBAC
 - [ ] SSO integration
@@ -404,6 +410,7 @@ MIT License - see [LICENSE](LICENSE) file
 ## Credits
 
 Built with:
+
 - [tree-sitter](https://tree-sitter.github.io/) - AST parsing
 - [FastAPI](https://fastapi.tiangolo.com/) - REST API
 - [SQLAlchemy](https://www.sqlalchemy.org/) - Database ORM

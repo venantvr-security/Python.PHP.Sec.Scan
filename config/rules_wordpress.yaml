@@ -40,25 +40,25 @@ rules:
         vuln: "wp_xss"
     filters:
       - function: "esc_html"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "esc_attr"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "esc_url"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "esc_js"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "esc_textarea"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "wp_kses"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "wp_kses_post"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "sanitize_text_field"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "sanitize_email"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
       - function: "sanitize_url"
-        sanitizes: ["wp_xss"]
+        sanitizes: [ "wp_xss" ]
 
   - name: wp_sql_injection
     sources:
@@ -100,16 +100,16 @@ rules:
         vuln: "wp_sql_injection"
     filters:
       - function: "esc_sql"
-        sanitizes: ["wp_sql_injection"]
+        sanitizes: [ "wp_sql_injection" ]
         warning: "Use prepare() instead of esc_sql()"
       - function: "prepare"
-        sanitizes: ["wp_sql_injection"]
+        sanitizes: [ "wp_sql_injection" ]
       - function: "absint"
-        sanitizes: ["wp_sql_injection"]
+        sanitizes: [ "wp_sql_injection" ]
       - function: "intval"
-        sanitizes: ["wp_sql_injection"]
+        sanitizes: [ "wp_sql_injection" ]
       - function: "sanitize_key"
-        sanitizes: ["wp_sql_injection"]
+        sanitizes: [ "wp_sql_injection" ]
 
   - name: wp_nonce_missing
     # Detection of actions without nonce verification
@@ -145,11 +145,11 @@ rules:
         vuln: "wp_file_upload"
     filters:
       - function: "wp_check_filetype"
-        sanitizes: ["wp_file_upload"]
+        sanitizes: [ "wp_file_upload" ]
       - function: "wp_handle_upload"
-        sanitizes: ["wp_file_upload"]
+        sanitizes: [ "wp_file_upload" ]
       - function: "sanitize_file_name"
-        sanitizes: ["wp_file_upload"]
+        sanitizes: [ "wp_file_upload" ]
 
   - name: wp_direct_file_access
     # Detect files without ABSPATH check
@@ -175,7 +175,7 @@ rules:
         vuln: "wp_unsafe_unserialize"
     filters:
       - function: "maybe_unserialize"
-        sanitizes: ["wp_unsafe_unserialize"]
+        sanitizes: [ "wp_unsafe_unserialize" ]
         warning: "Use maybe_unserialize() with caution"
 
   - name: wp_csrf
@@ -190,7 +190,7 @@ rules:
     # Unsafe password/token comparison
     patterns:
       - type: "unsafe_comparison"
-        operators: ["==", "!="]
-        comparing: ["password", "token", "nonce", "key", "secret"]
+        operators: [ "==", "!=" ]
+        comparing: [ "password", "token", "nonce", "key", "secret" ]
         vuln: "wp_timing_attack"
         recommendation: "Use hash_equals() for timing-safe comparison"

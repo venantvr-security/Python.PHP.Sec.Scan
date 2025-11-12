@@ -2,7 +2,8 @@
 """AST node caching within files."""
 
 from functools import lru_cache
-from typing import List, Dict, Any
+from typing import List
+
 from tree_sitter import Node
 
 

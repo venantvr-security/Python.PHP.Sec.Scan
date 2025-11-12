@@ -1,8 +1,10 @@
 # analysis/call_graph.py
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Tuple
+from pathlib import Path
+
 from tree_sitter import Node
-import os
 
 
 @dataclass
@@ -11,29 +13,31 @@ class FunctionDef:
     name: str
     file_path: str
     node: Node
-    params: List[str]  # Parameter names
+    params: List[str]
     line_number: int
+    namespace: Optional[str] = None
 
 
 @dataclass
 class CallSite:
     """Function call site metadata."""
-    caller_function: Optional[str]  # None if global scope
+    caller_function: Optional[str]
     caller_file: str
     callee_name: str
-    arguments: List[Node]  # Argument nodes
+    arguments: List[Node]
     node: Node
     line_number: int
 
 
 class CallGraph:
-    """Inter-procedural call graph for PHP codebase."""
+    """Optimized inter-procedural call graph for PHP codebase."""
 
     def __init__(self):
-        self.functions: Dict[str, List[FunctionDef]] = {}  # name -> [FunctionDef]
+        self.functions: Dict[str, List[FunctionDef]] = {}
         self.call_sites: List[CallSite] = []
-        self.includes: Dict[str, Set[str]] = {}  # file -> {included_files}
-        self.file_asts: Dict[str, Tuple[Node, bytes]] = {}  # file -> (tree, code)
+        self.includes: Dict[str, Set[str]] = {}
+        self.file_asts: Dict[str, Tuple[Node, bytes]] = {}
+        self._resolution_cache: Dict[str, Optional[FunctionDef]] = {}
 
     def add_function(self, func_def: FunctionDef):
         """Register function definition."""
@@ -52,14 +56,33 @@ class CallGraph:
         self.includes[from_file].add(to_file)
 
     def resolve_call(self, call_site: CallSite) -> Optional[FunctionDef]:
-        """Resolve call site to function definition."""
+        """Resolve call site to function definition with caching."""
+        cache_key = f"{call_site.caller_file}:{call_site.callee_name}"
+        if cache_key in self._resolution_cache:
+            return self._resolution_cache[cache_key]
+
         candidates = self.functions.get(call_site.callee_name, [])
         if not candidates:
+            self._resolution_cache[cache_key] = None
             return None
 
-        # Simple resolution: return first candidate
-        # TODO: improve with namespace/scope analysis
-        return candidates[0]
+        # Prioritize same-file definitions
+        for candidate in candidates:
+            if candidate.file_path == call_site.caller_file:
+                self._resolution_cache[cache_key] = candidate
+                return candidate
+
+        # Return first candidate from included files
+        included = self.get_included_files(call_site.caller_file)
+        for candidate in candidates:
+            if candidate.file_path in included:
+                self._resolution_cache[cache_key] = candidate
+                return candidate
+
+        # Fallback to first candidate
+        result = candidates[0]
+        self._resolution_cache[cache_key] = result
+        return result
 
     def get_callees(self, function_name: str) -> List[CallSite]:
         """Get all call sites from a function."""
@@ -141,16 +164,20 @@ class CallGraphBuilder:
 
     def _extract_params(self, func_node: Node) -> List[str]:
         """Extract parameter names from function definition."""
-        params = []
         params_node = func_node.child_by_field_name('parameters')
         if not params_node:
-            return params
+            return []
 
+        params = []
         for child in params_node.children:
             if child.type == 'simple_parameter':
                 name_node = child.child_by_field_name('name')
                 if name_node:
-                    # Remove $ prefix
+                    param_name = name_node.text.decode('utf-8').lstrip('$')
+                    params.append(param_name)
+            elif child.type == 'property_promotion_parameter':
+                name_node = child.child_by_field_name('name')
+                if name_node:
                     param_name = name_node.text.decode('utf-8').lstrip('$')
                     params.append(param_name)
 
@@ -199,7 +226,7 @@ class CallGraphBuilder:
     def _extract_includes(self, node: Node, code: bytes):
         """Extract include/require statements."""
         if node.type in ['include_expression', 'include_once_expression',
-                        'require_expression', 'require_once_expression']:
+                         'require_expression', 'require_once_expression']:
             # Try to resolve static include path
             arg_node = None
             for child in node.children:
@@ -218,19 +245,29 @@ class CallGraphBuilder:
 
     def _resolve_include_path(self, path: str) -> Optional[str]:
         """Resolve include path to absolute file path."""
-        # Handle __DIR__ constant
-        if '__DIR__' in path:
-            current_dir = os.path.dirname(self.current_file)
-            path = path.replace('__DIR__', current_dir)
+        current_dir = os.path.dirname(self.current_file)
+
+        # Handle PHP constants
+        replacements = {
+            '__DIR__': current_dir,
+            '__FILE__': self.current_file,
+        }
+        for const, value in replacements.items():
+            if const in path:
+                path = path.replace(const, value)
 
         # Make absolute if relative
         if not os.path.isabs(path):
-            current_dir = os.path.dirname(self.current_file)
             path = os.path.join(current_dir, path)
 
         path = os.path.normpath(path)
 
-        if os.path.exists(path):
+        # Check if file exists
+        if os.path.isfile(path):
             return path
+
+        # Try with .php extension
+        if not path.endswith('.php') and os.path.isfile(path + '.php'):
+            return path + '.php'
 
         return None

@@ -1,6 +1,7 @@
 # tests/test_plugins.py
-import tempfile
 import os
+import tempfile
+
 from plugins import (
     PluginManager, ScannerPlugin, WordPressPlugin,
     PerformancePlugin, NotificationPlugin
@@ -218,6 +219,7 @@ def test_vulnerability_processing():
     manager = PluginManager()
 
     class TestPlugin(ScannerPlugin):
+
         def on_scan_start(self, scan_context):
             pass
 
@@ -246,6 +248,7 @@ def test_plugin_filtering():
     manager = PluginManager()
 
     class FilterPlugin(ScannerPlugin):
+
         def on_scan_start(self, scan_context):
             pass
 

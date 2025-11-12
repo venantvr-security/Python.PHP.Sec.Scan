@@ -1,7 +1,8 @@
 # tests/test_sarif.py
 import json
-import tempfile
 import os
+import tempfile
+
 from exporters.sarif import SARIFExporter
 
 

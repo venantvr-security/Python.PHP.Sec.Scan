@@ -14,6 +14,7 @@ The PHP Security Scanner includes a plugin system that allows you to extend func
 ## Built-in Plugins
 
 ### WordPress Plugin
+
 Detects WordPress projects and tracks hooks/actions.
 
 ```python
@@ -23,11 +24,13 @@ plugin = WordPressPlugin()
 ```
 
 Features:
+
 - Auto-detects WordPress installations (wp-config.php, wp-load.php)
 - Tracks `add_action()` and `add_filter()` calls
 - Adds WordPress-specific statistics to scan results
 
 ### Performance Plugin
+
 Monitors and reports scan performance metrics.
 
 ```python
@@ -37,12 +40,14 @@ plugin = PerformancePlugin()
 ```
 
 Features:
+
 - Tracks total scan time
 - Measures per-file analysis time
 - Identifies slowest files
 - Calculates average processing time
 
 ### Notification Plugin
+
 Sends webhook notifications on scan completion.
 
 ```python
@@ -52,6 +57,7 @@ plugin = NotificationPlugin(webhook_url="https://hooks.slack.com/...")
 ```
 
 Features:
+
 - Sends POST requests to webhook URLs
 - Includes vulnerability counts and severity breakdown
 - Configurable via environment variable `WEBHOOK_URL`
@@ -59,6 +65,7 @@ Features:
 ## Custom Plugins
 
 ### Custom Rules Plugin
+
 Add organization-specific security checks.
 
 ```python
@@ -68,12 +75,14 @@ plugin = CustomRulesPlugin()
 ```
 
 Features:
+
 - Detects deprecated MySQL functions (`mysql_query`, etc.)
 - Identifies dangerous patterns (`extract`, `parse_str`, `$$`)
 - Can upgrade severity based on function usage
 - Adds custom warnings to scan results
 
 ### Metrics Exporter Plugin
+
 Export metrics to monitoring systems (Prometheus, JSON).
 
 ```python
@@ -87,12 +96,14 @@ plugin = MetricsExporterPlugin(export_format='prometheus', output_dir='metrics')
 ```
 
 Features:
+
 - JSON format for general use
 - Prometheus text format for monitoring
 - Tracks vulnerabilities by type and severity
 - Includes cache hit rate and performance metrics
 
 ### Slack Notifier Plugin
+
 Send rich notifications to Slack channels.
 
 ```python
@@ -105,12 +116,14 @@ plugin = SlackNotifierPlugin(
 ```
 
 Features:
+
 - Rich message formatting with blocks
 - Color-coded by severity
 - Channel mentions for critical vulnerabilities
 - Scan start and completion notifications
 
 ### Security Policy Plugin
+
 Enforce organizational security policies.
 
 ```python
@@ -125,6 +138,7 @@ plugin = SecurityPolicyPlugin(
 ```
 
 Features:
+
 - Configurable thresholds by severity
 - Can fail builds on policy violations (exit code 1)
 - Detailed violation reporting
@@ -214,51 +228,64 @@ class MyCustomPlugin(ScannerPlugin):
 ### Plugin Hooks
 
 #### `on_scan_start(scan_context)`
+
 Called before scanning begins.
 
 Parameters:
+
 - `scan_context`: Dict with `root_path`, `project`, etc.
 
 Use cases:
+
 - Initialize plugin state
 - Detect project type
 - Print startup messages
 
 #### `on_file_scanned(file_path, results)`
+
 Called after each file is analyzed.
 
 Parameters:
+
 - `file_path`: Path to scanned file
 - `results`: Dict with `vulnerabilities`, `warnings`, `analysis_time`, etc.
 
 Use cases:
+
 - Track per-file metrics
 - Add custom warnings
 - Detect patterns in code
 
 #### `on_scan_complete(scan_results)`
+
 Called after all files are scanned.
 
 Parameters:
+
 - `scan_results`: Dict with `files`, `statistics`
 
 Use cases:
+
 - Generate reports
 - Send notifications
 - Export metrics
 - Enforce policies
 
 #### `on_vulnerability_found(vulnerability)`
+
 Called for each vulnerability before reporting.
 
 Parameters:
+
 - `vulnerability`: Dict with `type`, `file`, `line`, `severity`, `sink`
 
 Returns:
+
 - Modified vulnerability dict
 - `None` to filter out the vulnerability
 
 Use cases:
+
 - Modify severity
 - Add context
 - Filter false positives
@@ -329,6 +356,7 @@ def test_plugin_vulnerability_processing():
 ```
 
 Run tests:
+
 ```bash
 pytest tests/test_my_plugin.py -v
 ```
@@ -393,6 +421,7 @@ manager.load_from_directory('plugins')
 ```
 
 Requirements:
+
 - File must end with `.py`
 - Must contain a class that inherits from `ScannerPlugin`
 - Class must not be `ScannerPlugin` itself
@@ -400,21 +429,25 @@ Requirements:
 ## Troubleshooting
 
 **Plugin not loading:**
+
 - Check the file is in the correct directory
 - Verify the class inherits from `ScannerPlugin`
 - Look for import errors in the plugin file
 
 **Webhook notifications not sent:**
+
 - Verify the webhook URL is correct
 - Check `requests` library is installed: `pip install requests`
 - Test the webhook manually with curl
 
 **Performance issues:**
+
 - Profile plugin with `cProfile`
 - Move heavy operations to `on_scan_complete`
 - Use caching for expensive lookups
 
 **Tests failing:**
+
 - Check for absolute paths in tests
 - Use `tempfile.TemporaryDirectory()` for file operations
 - Mock external services (webhooks, APIs)

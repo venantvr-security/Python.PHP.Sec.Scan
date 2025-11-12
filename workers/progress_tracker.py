@@ -60,7 +60,7 @@ class ProgressTracker:
         # Truncate current_item if too long
         max_item_length = 40
         if len(current_item) > max_item_length:
-            current_item = "..." + current_item[-(max_item_length-3):]
+            current_item = "..." + current_item[-(max_item_length - 3):]
 
         # Display
         sys.stdout.write(f'\r')

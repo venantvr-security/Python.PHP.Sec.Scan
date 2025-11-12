@@ -4,7 +4,6 @@
 import os
 import pickle
 from typing import Optional, Any
-import hashlib
 
 
 class RedisCache:
@@ -20,6 +19,7 @@ class RedisCache:
         """Connect to Redis server."""
         try:
             import redis
+
             self.redis_client = redis.from_url(
                 self.redis_url,
                 decode_responses=False,

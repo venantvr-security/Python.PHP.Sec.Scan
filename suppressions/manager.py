@@ -1,11 +1,11 @@
 # suppressions/manager.py
 """Manage vulnerability suppressions and allowlists."""
 
-import json
-import yaml
-from typing import List, Dict, Set, Optional
-from pathlib import Path
 import hashlib
+from pathlib import Path
+from typing import List, Dict, Optional
+
+import yaml
 
 
 class SuppressionManager:
@@ -49,8 +49,8 @@ class SuppressionManager:
         # Match by location and type
         if 'file' in suppression and 'line' in suppression and 'type' in suppression:
             if (vulnerability['file'].endswith(suppression['file']) and
-                vulnerability['line'] == suppression['line'] and
-                vulnerability['type'] == suppression['type']):
+                    vulnerability['line'] == suppression['line'] and
+                    vulnerability['type'] == suppression['type']):
                 return True
 
         # Match by pattern
@@ -122,6 +122,7 @@ class SuppressionManager:
     def _get_timestamp(self) -> str:
         """Get current timestamp."""
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc).isoformat()
 
     def get_statistics(self) -> Dict:
@@ -178,6 +179,7 @@ class AllowlistManager:
         """Check if vulnerability matches allowlist pattern."""
         if 'file_pattern' in pattern:
             import re
+
             if not re.search(pattern['file_pattern'], vulnerability['file']):
                 return False
 
@@ -186,6 +188,7 @@ class AllowlistManager:
 
         if 'sink_pattern' in pattern:
             import re
+
             sink = vulnerability.get('sink', '')
             if not re.search(pattern['sink_pattern'], sink):
                 return False
@@ -205,4 +208,5 @@ class AllowlistManager:
     def _get_timestamp(self) -> str:
         """Get current timestamp."""
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc).isoformat()

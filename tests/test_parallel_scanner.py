@@ -6,10 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from workers.parallel_scanner import ParallelScanner
 from cache.ast_cache import ASTCache
-from db.connection import get_session, init_db
 from db.models import Project, Scan, Vulnerability
+from workers.parallel_scanner import ParallelScanner
 
 
 def test_parallel_scanner_basic():

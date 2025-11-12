@@ -8,12 +8,11 @@ Tests scanner performance across different configurations:
 - Various project sizes
 """
 
-import time
-import tempfile
 import os
-from pathlib import Path
-from typing import List, Dict
 import statistics
+import tempfile
+import time
+from typing import List, Dict
 
 from workers.parallel_scanner import ParallelScanner
 
@@ -50,11 +49,11 @@ def generate_test_files(num_files: int, lines_per_file: int = 50) -> List[str]:
 
 
 def benchmark_configuration(
-    files: List[str],
-    workers: int,
-    use_cache: bool,
-    vuln_types: List[str],
-    iterations: int = 3
+        files: List[str],
+        workers: int,
+        use_cache: bool,
+        vuln_types: List[str],
+        iterations: int = 3
 ) -> Dict:
     """Run benchmark for a specific configuration."""
     times = []
@@ -88,9 +87,9 @@ def benchmark_configuration(
 
 def run_benchmarks():
     """Run comprehensive performance benchmarks."""
-    print("="*70)
+    print("=" * 70)
     print("PHP SECURITY SCANNER - PERFORMANCE BENCHMARK")
-    print("="*70)
+    print("=" * 70)
 
     # Test configurations
     file_counts = [10, 50, 100]
@@ -138,12 +137,13 @@ def run_benchmarks():
 
         # Cleanup
         import shutil
+
         shutil.rmtree(tmpdir, ignore_errors=True)
 
     # Print summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("BENCHMARK SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
     print(f"\n{'Files':<8} {'Workers':<8} {'Cache':<10} {'Median':<10} {'StdDev':<10} {'Vulns':<8}")
     print("-" * 70)
@@ -154,14 +154,14 @@ def run_benchmarks():
               f"{r['median_time']:<10.3f} {r['std_dev']:<10.3f} {r['total_vulnerabilities']:<8}")
 
     # Calculate speedups
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("SPEEDUP ANALYSIS")
-    print("="*70)
+    print("=" * 70)
 
     for num_files in file_counts:
         # Baseline: 1 worker, no cache
         baseline = next((r for r in results if r['num_files'] == num_files
-                        and r['workers'] == 1 and not r['cache']), None)
+                         and r['workers'] == 1 and not r['cache']), None)
 
         if not baseline:
             continue
@@ -171,7 +171,7 @@ def run_benchmarks():
         # Compare parallel speedup
         for workers in [4, 8, 12]:
             parallel_result = next((r for r in results if r['num_files'] == num_files
-                                   and r['workers'] == workers and not r['cache']), None)
+                                    and r['workers'] == workers and not r['cache']), None)
             if parallel_result:
                 speedup = baseline['median_time'] / parallel_result['median_time']
                 print(f"  {workers} workers (no cache):  {parallel_result['median_time']:.2f}s  "
@@ -179,16 +179,16 @@ def run_benchmarks():
 
         # Compare cache speedup
         cached_result = next((r for r in results if r['num_files'] == num_files
-                             and r['workers'] == 12 and r['cache']), None)
+                              and r['workers'] == 12 and r['cache']), None)
         if cached_result:
             speedup = baseline['median_time'] / cached_result['median_time']
             print(f"  12 workers + cache:    {cached_result['median_time']:.2f}s  "
                   f"(speedup: {speedup:.2f}x, hit rate: {cached_result['cache_hit_rate']:.1%})")
 
     # Best configurations
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("RECOMMENDED CONFIGURATIONS")
-    print("="*70)
+    print("=" * 70)
 
     for num_files in file_counts:
         file_results = [r for r in results if r['num_files'] == num_files]

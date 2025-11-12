@@ -21,27 +21,28 @@ logger = logging.getLogger(__name__)
 
 
 class TaintTracker:
-    """Suit les flux de données pour détecter les vulnérabilités via taint tracking."""
+    """Optimized taint tracking for vulnerability detection."""
+
+    SUPERGLOBALS = frozenset({'$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV', '$_SESSION'})
 
     def __init__(self, source_code: bytes, vuln_types: List[str], verbose: bool = False):
-        """Initialise le tracker avec le code source et les types de vulnérabilités."""
+        """Initialize tracker with source code and vulnerability types."""
         self.source_code = source_code
-        self.rules = parse_dsl()  # Charge rules.dsl
+        self.rules = parse_dsl()
         self.vuln_types = vuln_types
-        self.taint_state = TaintState()  # Remplace tainted_vars, tainted_vars_info, sanitized_vars
-        self.vulnerabilities: List[Dict[str, Any]] = []  # Vulnérabilités détectées
-        # self.warnings: List[Dict[str, Any]] = []  # Avertissements (ex. htmlentities)
-        self.warning_manager = WarningManager()  # Gestion des avertissements
-        self.sink_nodes: List[Node] = []  # Nœuds sinks à analyser
-        self.verbose = True
+        self.taint_state = TaintState()
+        self.vulnerabilities: List[Dict[str, Any]] = []
+        self.warning_manager = WarningManager()
+        self.sink_nodes: List[Node] = []
+        self.verbose = verbose
         self.logger = logger
         self.logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
-        # Chargement dynamique des sinks et filtres
+        # Load sinks and filters dynamically
         self.sink_functions = self._load_sinks()
         self.filter_functions = self._load_filters()
 
-        # Dictionnaire des handlers par type de nœud (logique métier)
+        # Node handlers dispatch table
         self.node_handlers = {
             'assignment_expression': self.handle_assignment,
             'function_call_expression': self.handle_function_call,
@@ -115,42 +116,25 @@ class TaintTracker:
         return filters
 
     def is_source(self, node: Node) -> bool:
-        """Vérifie si un nœud est une source de données utilisateur (ex. $_GET)."""
-        text = get_node_text(node, self.source_code)
-        self.logger.info(f"Checking source: node_type={node.type}, text={text}")
+        """Check if node is a user input source."""
         if node.type == 'subscript_expression':
-            object_node = node.child_by_field_name('object')
-            object_text = get_node_text(object_node, self.source_code) if object_node else None
-            for child in node.named_children:
-                child_text = get_node_text(child, self.source_code)
-                self.logger.info(f"Subscript child: type={child.type}, text={child_text}")
-            for rule_name in self.vuln_types:
-                rule = self.rules.get(rule_name, {})
-                for source in rule.get('sources', []):
-                    pattern = source['pattern'].replace('[*]', r"\['?.*?'?\]")
-                    self.logger.info(f"Testing pattern: {pattern} against text: {text}")
-                    if re.match(pattern, text, re.DOTALL):
-                        self.logger.info(f"Source detected (regex): {text}")
-                        return True
-                    if object_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV', '$_SESSION']:
-                        self.logger.info(f"Source detected (object): {text}, object={object_text}")
-                        return True
-                    for child in node.named_children:
-                        if child.type == 'variable_name' and get_node_text(child, self.source_code) in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER',
-                                                                                                        '$_ENV', '$_SESSION']:
-                            self.logger.info(f"Source detected (child): {text}, child={get_node_text(child, self.source_code)}")
-                            return True
+            # subscript_expression doesn't have field names, use named_children
+            if node.named_children and node.named_children[0].type == 'variable_name':
+                var_text = get_node_text(node.named_children[0], self.source_code)
+                if var_text in self.SUPERGLOBALS:
+                    self.logger.info(f"Source detected: {var_text}")
+                    return True
         elif node.type == 'variable_name':
             var_text = get_node_text(node, self.source_code)
-            if var_text in ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER', '$_ENV', '$_SESSION']:
-                self.logger.info(f"Source detected (direct variable): {var_text}")
+            if var_text in self.SUPERGLOBALS:
+                self.logger.info(f"Source detected: {var_text}")
                 return True
         elif node.type == 'function_call_expression':
             func_node = node.child_by_field_name('function')
             if func_node:
                 func_name = get_node_text(func_node, self.source_code)
-                if func_name in ['getenv', 'file_get_contents']:
-                    self.logger.info(f"Source detected (function): {func_name}")
+                if func_name in {'getenv', 'file_get_contents', 'curl_exec', 'fgets', 'stream_get_contents'}:
+                    self.logger.info(f"Source detected: {func_name}")
                     return True
         return False
 
@@ -197,62 +181,113 @@ class TaintTracker:
         return is_filter, sanitized_types, filter_name
 
     def handle_assignment(self, node: Node) -> None:
-        """Propage le taint via les assignations et enregistre les informations des variables tainted."""
+        """Propagate taint through assignments."""
         left = node.child_by_field_name('left')
         right = node.child_by_field_name('right')
-        if left and left.type == 'variable_name' and right:
-            var_name = get_node_text(left, self.source_code)
-            self.logger.info(f"Assignment: var={var_name}, right_type={right.type}")
+        if not (left and left.type == 'variable_name' and right):
+            return
 
-            if self.is_source(right):
-                self.taint_state.mark_tainted(var_name, node.start_point[0] + 1)
-                self.logger.info(f"Tainted var: {var_name} (source) at line {node.start_point[0] + 1}")
-            elif right.type == 'function_call_expression':
-                func_node = right.child_by_field_name('function')
-                if func_node:
-                    func_name = get_node_text(func_node, self.source_code)
-                    func_def = self.find_function_definition(func_name, right)
-                    if func_def and self.has_tainted_return(func_def):
-                        self.taint_state.mark_tainted(var_name, node.start_point[0] + 1)
-                        self.logger.info(f"Tainted var: {var_name} (function return) at line {node.start_point[0] + 1}")
-            elif right.type == 'variable_name':
-                source_var = get_node_text(right, self.source_code)
-                self.logger.info(f"Checking propagation from variable: {source_var}, is_tainted: {self.taint_state.is_tainted(source_var)}")
-                if self.taint_state.is_tainted(source_var):
-                    self.taint_state.mark_tainted(var_name, node.start_point[0] + 1)
-                    self.logger.info(f"Tainted var: {var_name} (propagated from {source_var}) at line {node.start_point[0] + 1}")
-                    self.logger.info(
-                        f"After propagation: tainted_vars={self.taint_state.get_tainted_vars()}, tainted_vars_info={self.taint_state.get_tainted_vars_info()}")
+        var_name = get_node_text(left, self.source_code)
+        line = node.start_point[0] + 1
+
+        if self.is_source(right):
+            self.taint_state.mark_tainted(var_name, line)
+            self.logger.info(f"Tainted: {var_name} (source) at {line}")
+        elif right.type == 'variable_name':
+            source_var = get_node_text(right, self.source_code)
+            if self.taint_state.is_tainted(source_var):
+                self.taint_state.mark_tainted(var_name, line)
+                self.logger.info(f"Tainted: {var_name} <- {source_var} at {line}")
+        elif right.type in {'binary_expression', 'encapsed_string'}:
+            if self._contains_tainted_var(right):
+                self.taint_state.mark_tainted(var_name, line)
+                self.logger.info(f"Tainted: {var_name} (expression) at {line}")
+
+    def _contains_tainted_var(self, node: Node) -> bool:
+        """Check if node contains tainted variables."""
+        if node.type == 'variable_name':
+            return self.taint_state.is_tainted(get_node_text(node, self.source_code))
+        return any(self._contains_tainted_var(child) for child in node.children)
+
+    def _propagate_taint_to_params(self, call_node: Node, func_def: Node) -> None:
+        """Propagate taint from function call arguments to function parameters."""
+        args_node = call_node.child_by_field_name('arguments')
+        if not args_node:
+            return
+
+        # Get function parameters
+        params = self.get_function_params(func_def)
+        args = args_node.named_children
+
+        # Match arguments to parameters
+        for i, arg in enumerate(args):
+            if i >= len(params):
+                break
+
+            # Extract actual argument (skip 'argument' wrapper)
+            actual_arg = arg.named_children[0] if arg.type == 'argument' and arg.named_children else arg
+
+            # Check if argument is tainted
+            if actual_arg.type == 'variable_name':
+                var_name = get_node_text(actual_arg, self.source_code)
+                if self.taint_state.is_tainted(var_name):
+                    # Mark parameter as tainted
+                    param_name = params[i]
+                    self.taint_state.mark_tainted(param_name, call_node.start_point[0] + 1)
+                    self.logger.info(f"Interprocedural: {var_name} -> {param_name}")
+            elif self.is_source(actual_arg) or self._contains_tainted_var(actual_arg):
+                # Argument is a source or contains tainted data
+                param_name = params[i]
+                self.taint_state.mark_tainted(param_name, call_node.start_point[0] + 1)
+                self.logger.info(f"Interprocedural: tainted arg -> {param_name}")
+
+    def _mark_call_result_tainted(self, call_node: Node) -> None:
+        """Mark the result of a function call as tainted."""
+        # Find the assignment that uses this call
+        parent = call_node.parent
+        while parent:
+            if parent.type == 'assignment_expression':
+                left = parent.child_by_field_name('left')
+                if left and left.type == 'variable_name':
+                    var_name = get_node_text(left, self.source_code)
+                    self.taint_state.mark_tainted(var_name, parent.start_point[0] + 1)
+                    self.logger.info(f"Interprocedural: tainted return -> {var_name}")
+                break
+            parent = parent.parent
 
     def handle_function_call(self, node: Node) -> None:
-        """Gère les appels de fonctions pour propagation et sinks."""
+        """Handle function calls for propagation and sinks."""
         func_node = node.child_by_field_name('function')
-        if func_node:
-            func_name = get_node_text(func_node, self.source_code)
-            self.logger.info(f"Processing call: {func_name}")
-            is_filter, sanitized_types, filter_name = self.is_filter_call(node)
-            if is_filter:
-                args = node.child_by_field_name('arguments')
-                if args and args.named_children and args.named_children[0].type == 'argument' and args.named_children[0].named_children:
-                    var_name = get_node_text(args.named_children[0].named_children[0], self.source_code)
-                    self.taint_state.mark_sanitized(var_name, sanitized_types)
-                    self.logger.info(f"Sanitized var: {var_name} by {filter_name}")
-            elif func_name in self.sink_functions['function_call_expression']:
-                self.sink_nodes.append(node)
-                self.logger.info(f"Sink detected: {func_name}")
-            elif func_name not in self.filter_functions['function']:
-                args = node.child_by_field_name('arguments')
-                if args:
-                    func_def = self.find_function_definition(func_name, node)
-                    if func_def:
-                        params = self.get_function_params(func_def)
-                        for i, arg in enumerate(args.named_children):
-                            if i < len(params) and arg.type == 'argument' and arg.named_children:
-                                arg_var = get_node_text(arg.named_children[0], self.source_code)
-                                if self.taint_state.is_tainted(arg_var):
-                                    param_var = params[i]
-                                    self.taint_state.mark_tainted(param_var, node.start_point[0] + 1)
-                                    self.logger.info(f"Propagated taint: {arg_var} -> {param_var} in {func_name}")
+        if not func_node:
+            return
+
+        func_name = get_node_text(func_node, self.source_code)
+        is_filter, sanitized_types, filter_name = self.is_filter_call(node)
+
+        if is_filter:
+            self._handle_sanitization(node, sanitized_types, filter_name)
+        elif func_name in self.sink_functions.get('function_call_expression', set()):
+            self.sink_nodes.append(node)
+            self.logger.info(f"Sink: {func_name}")
+        else:
+            # Check for interprocedural taint propagation
+            func_def = self.find_function_definition(func_name, node)
+            if func_def:
+                # Propagate taint from arguments to parameters
+                self._propagate_taint_to_params(node, func_def)
+                # Check if function returns tainted data
+                if self.has_tainted_return(func_def):
+                    self._mark_call_result_tainted(node)
+
+    def _handle_sanitization(self, node: Node, sanitized_types: List[str], filter_name: str) -> None:
+        """Handle variable sanitization."""
+        args = node.child_by_field_name('arguments')
+        if args and args.named_children:
+            first_arg = args.named_children[0]
+            if first_arg.type == 'argument' and first_arg.named_children:
+                var_name = get_node_text(first_arg.named_children[0], self.source_code)
+                self.taint_state.mark_sanitized(var_name, sanitized_types)
+                self.logger.info(f"Sanitized: {var_name} by {filter_name}")
 
     def handle_member_call(self, node: Node) -> None:
         """Gère les appels de méthodes pour sanitization et sinks."""
