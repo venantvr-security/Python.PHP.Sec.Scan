@@ -1,112 +1,45 @@
-.PHONY: clean-venv venv install test help db-init db-migrate scan-demo
-
-VENV_DIR := .venv
-PYTHON := python3
-PIP := $(VENV_DIR)/bin/pip
-PYTEST := $(VENV_DIR)/bin/pytest
-PYTHON_BIN := $(VENV_DIR)/bin/python
+.PHONY: venv install test lint run-api run-web clean help
 
 help:
+	@echo "PHP Security Scanner - Makefile"
+	@echo ""
 	@echo "Available targets:"
-	@echo ""
-	@echo "Setup:"
-	@echo "  clean-venv    - Remove virtual environments (venv and .venv)"
-	@echo "  venv          - Create fresh virtual environment in .venv"
-	@echo "  install       - Install dependencies from requirements.txt"
-	@echo ""
-	@echo "Testing:"
-	@echo "  test          - Run all tests"
-	@echo "  test-taint    - Run taint tracker tests only"
-	@echo "  test-scanner  - Run scanner tests only"
-	@echo ""
-	@echo "Database:"
-	@echo "  db-init       - Initialize database schema"
-	@echo "  db-migrate    - Run database migrations"
-	@echo "  db-shell      - Open database shell"
-	@echo ""
-	@echo "Scanning:"
-	@echo "  scan-demo     - Run demo scan on tests directory"
-	@echo "  clean-cache   - Clear AST cache"
+	@echo "  venv       - Create virtual environment"
+	@echo "  install    - Install dependencies"
+	@echo "  test       - Run tests"
+	@echo "  lint       - Run code quality checks"
+	@echo "  run-api    - Start FastAPI server"
+	@echo "  run-web    - Start web interface"
+	@echo "  clean      - Clean build artifacts"
 
-clean-venv:
-	@echo "Removing virtual environments..."
-	rm -rf venv .venv
-	@echo "Virtual environments removed."
-
-venv: clean-venv
-	@echo "Creating virtual environment in $(VENV_DIR)..."
-	$(PYTHON) -m venv $(VENV_DIR)
-	@echo "Virtual environment created."
-	@echo "Installing dependencies..."
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
-	@echo "Setup complete. Activate with: source $(VENV_DIR)/bin/activate"
+venv:
+	python3 -m venv .venv
+	@echo "✓ Virtual environment created"
+	@echo "Activate with: source .venv/bin/activate"
 
 install:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Installing dependencies..."
-	$(PIP) install -r requirements.txt
-	@echo "Dependencies installed."
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install -r requirements.txt
+	@echo "✓ Dependencies installed"
 
 test:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Running all tests..."
-	$(PYTEST) tests/ -v
+	.venv/bin/pytest -v --tb=short
 
-test-taint:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Running taint tracker tests..."
-	$(PYTEST) tests/test_taint_tracker.py -v
+test-cov:
+	.venv/bin/pytest --cov=. --cov-report=html --cov-report=term
 
-test-scanner:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Running scanner tests..."
-	$(PYTEST) tests/test_scanner.py -v
+lint:
+	.venv/bin/ruff check .
 
-db-init:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Initializing database..."
-	$(PYTHON_BIN) -m db.cli init
+run-api:
+	.venv/bin/uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 
-db-migrate:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Running migrations..."
-	$(VENV_DIR)/bin/alembic upgrade head
+run-web:
+	.venv/bin/python web_interface.py
 
-db-shell:
-	@if [ -f scanner.db ]; then \
-		sqlite3 scanner.db; \
-	else \
-		echo "Database not found. Run 'make db-init' first."; \
-	fi
-
-scan-demo:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Virtual environment not found. Run 'make venv' first."; \
-		exit 1; \
-	fi
-	@echo "Running demo scan..."
-	$(PYTHON_BIN) cli_v2.py --dir tests/ --project demo --verbose --output report/demo_scan.json
-
-clean-cache:
-	@echo "Clearing cache..."
-	rm -rf cache_data/
-	@echo "Cache cleared."
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	rm -rf .pytest_cache htmlcov .coverage
+	@echo "✓ Cleaned build artifacts"

@@ -1,26 +1,32 @@
-tree-sitter>=0.24.0
-tree-sitter-php>=0.23.11
-PyYAML>=6.0.2
-pytest>=7.4.0
+# Core dependencies
+tree-sitter==0.21.3
+tree-sitter-php==0.23.8
+pyyaml==6.0.1
 
 # Database
-sqlalchemy>=2.0.0
-alembic>=1.13.0
+sqlalchemy==2.0.34
+alembic==1.13.2
 
 # API
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.5.0
-python-multipart>=0.0.6
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
 
-# Async & Workers
-aiofiles>=23.2.0
-redis>=5.0.0
+# Web Interface
+flask==3.0.3
 
 # Caching
-diskcache>=5.6.0
+diskcache==5.6.3
+redis==5.0.8
 
-# Reports
-jinja2>=3.1.0
-sarif-om>=1.0.4
-markdown>=3.5.0
+# Testing
+pytest==8.3.3
+pytest-cov==5.0.0
+pytest-asyncio==0.24.0
+
+# Code Quality
+ruff==0.7.2
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.32.3
