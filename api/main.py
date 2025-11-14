@@ -20,7 +20,7 @@ from workers.parallel_scanner import ParallelScanner
 app = FastAPI(
     title="PHP Security Scanner API",
     description="REST API for static security analysis of PHP code",
-    version="2.1.0"
+    version="2.4.0"
 )
 
 # Initialize parser
@@ -65,7 +65,7 @@ def read_root():
     """API root endpoint."""
     return {
         "name": "PHP Security Scanner API",
-        "version": "2.1.0",
+        "version": "2.4.0",
         "endpoints": {
             "projects": "/projects",
             "scans": "/scans",

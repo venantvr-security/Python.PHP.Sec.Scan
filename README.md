@@ -1,9 +1,9 @@
 # PHP Security Scanner - Production-Ready Static Analysis Tool
 
-[![Tests](https://img.shields.io/badge/tests-82%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-97%20passing-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.2.0-blue)](VERSION)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue)](VERSION)
 
 Advanced static analysis tool for PHP security vulnerabilities using taint analysis, AST parsing, and machine learning.
 
@@ -326,13 +326,14 @@ patterns:
 ## Testing
 
 ```bash
-# Run all tests (82 tests)
-pytest -v
+# Run all tests (118 tests total)
+pytest -v                                  # 97 pytest tests
+behave features/ --tags=-skip              # 21 BDD scenarios
 
 # Specific test suites
-pytest tests/test_taint_tracker.py -v     # 45 tests
-pytest tests/test_plugins.py -v           # 12 tests
-pytest integration_tests/ -v              # 7 tests
+pytest tests/test_taint_tracker.py -v      # 35 tests
+pytest tests/test_plugins.py -v            # 12 tests
+pytest integration_tests/ -v               # 7 tests
 
 # With coverage
 pytest --cov=. --cov-report=html
@@ -418,6 +419,6 @@ Built with:
 
 ---
 
-**Version 2.2.0** | 82 tests passing | Production-ready
+**Version 2.4.0** | 118 tests passing (97 pytest + 21 BDD) | Production-ready
 
 Generated with [Claude Code](https://claude.com/claude-code)

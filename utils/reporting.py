@@ -60,7 +60,7 @@ class ReportGenerator:
         from utils.metrics import ScanMetrics
 
         report = {
-            'version': '2.3.0',
+            'version': '2.4.0',
             'statistics': scan_stats,
             'vulnerabilities': vulnerabilities,
             'summary': {

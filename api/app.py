@@ -27,7 +27,7 @@ logger = get_logger('api.app')
 app = FastAPI(
     title="PHP Security Scanner API",
     description="Production-ready PHP security vulnerability scanner",
-    version="2.3.0",
+    version="2.4.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
@@ -122,7 +122,7 @@ async def root():
     """Root endpoint."""
     return {
         "service": "PHP Security Scanner API",
-        "version": "2.3.0",
+        "version": "2.4.0",
         "status": "operational",
         "docs": "/api/docs"
     }

@@ -10,7 +10,7 @@ from typing import List, Dict
 class SARIFExporter:
     """Export vulnerabilities in SARIF 2.1.0 format."""
 
-    def __init__(self, tool_name: str = "PHP-Security-Scanner", tool_version: str = "2.3.0"):
+    def __init__(self, tool_name: str = "PHP-Security-Scanner", tool_version: str = "2.4.0"):
         self.tool_name = tool_name
         self.tool_version = tool_version
         self._rule_cache: Dict[str, Dict] = {}
