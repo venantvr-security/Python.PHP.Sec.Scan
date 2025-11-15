@@ -10,9 +10,12 @@ Tests scanner performance across different configurations:
 
 import os
 import statistics
+import sys
 import tempfile
 import time
 from typing import List, Dict
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from workers.parallel_scanner import ParallelScanner
 
