@@ -19,7 +19,7 @@ def test_taint_tracker_sql_injection():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "sql_injection"
@@ -38,7 +38,7 @@ def test_taint_tracker_xss_sanitized():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -54,7 +54,7 @@ def test_taint_tracker_auth_bypass():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['auth_bypass'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "auth_bypass"
@@ -74,7 +74,7 @@ def test_taint_tracker_sql_injection_function_param():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "sql_injection"
@@ -93,7 +93,7 @@ def test_taint_tracker_xss_htmlentities_warning():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     warnings = result["warnings"]
     assert len(vulns) == 0
@@ -120,7 +120,7 @@ def test_taint_tracker_xss_class_method_sanitization():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     warnings = result["warnings"]
     assert len(vulns) == 0
@@ -140,7 +140,7 @@ def test_taint_tracker_xss_function_return():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     warnings = result["warnings"]
     assert len(vulns) == 1
@@ -160,7 +160,7 @@ def test_taint_tracker_unsanitized_source():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'], verbose=True)  # Activer verbose
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     warnings = result["warnings"]
     assert len(warnings) >= 1
     assert any(w["type"] == "unsanitized_source" and w["variable"] == "$id" for w in warnings)
@@ -177,7 +177,7 @@ def test_taint_tracker_rce_eval():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "rce"
@@ -195,7 +195,7 @@ def test_taint_tracker_rce_system():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "rce"
@@ -214,7 +214,7 @@ def test_taint_tracker_rce_sanitized():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -229,7 +229,7 @@ def test_taint_tracker_rce_exec():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "rce"
@@ -247,7 +247,7 @@ def test_taint_tracker_rce_shell_exec():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "rce"
@@ -265,7 +265,7 @@ def test_taint_tracker_rce_passthru():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['rce'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "rce"
@@ -283,7 +283,7 @@ def test_taint_tracker_file_inclusion_include():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['file_inclusion'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "file_inclusion"
@@ -301,7 +301,7 @@ def test_taint_tracker_file_inclusion_require():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['file_inclusion'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "file_inclusion"
@@ -320,7 +320,7 @@ def test_taint_tracker_file_inclusion_sanitized():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['file_inclusion'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -335,7 +335,7 @@ def test_taint_tracker_file_inclusion_include_once():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['file_inclusion'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "file_inclusion"
@@ -353,7 +353,7 @@ def test_taint_tracker_file_inclusion_require_once():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['file_inclusion'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "file_inclusion"
@@ -371,7 +371,7 @@ def test_taint_tracker_command_injection_exec():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['command_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "command_injection"
@@ -389,7 +389,7 @@ def test_taint_tracker_command_injection_system():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['command_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "command_injection"
@@ -408,7 +408,7 @@ def test_taint_tracker_command_injection_sanitized():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['command_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -423,7 +423,7 @@ def test_taint_tracker_command_injection_passthru():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['command_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "command_injection"
@@ -441,7 +441,7 @@ def test_taint_tracker_path_traversal_file_get_contents():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['path_traversal'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "path_traversal"
@@ -459,7 +459,7 @@ def test_taint_tracker_path_traversal_fopen():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['path_traversal'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "path_traversal"
@@ -478,7 +478,7 @@ def test_taint_tracker_path_traversal_sanitized():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['path_traversal'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -493,7 +493,7 @@ def test_taint_tracker_path_traversal_readfile():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['path_traversal'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "path_traversal"
@@ -511,7 +511,7 @@ def test_taint_tracker_path_traversal_unlink():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['path_traversal'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "path_traversal"
@@ -530,7 +530,7 @@ def test_taint_tracker_sql_intval_sanitizer():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -546,7 +546,7 @@ def test_taint_tracker_sql_floatval_sanitizer():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 0
 
@@ -564,7 +564,7 @@ def test_taint_tracker_nested_function_propagation():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "xss"
@@ -581,7 +581,7 @@ def test_taint_tracker_session_source():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['xss'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "xss"
@@ -598,7 +598,7 @@ def test_taint_tracker_getenv_source():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "sql_injection"
@@ -615,7 +615,7 @@ def test_taint_tracker_pdo_query():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "sql_injection"
@@ -633,7 +633,7 @@ def test_taint_tracker_pdo_exec():
     """
     tree = PARSER.parse(code.encode('utf-8'))
     tracker = TaintTracker(code.encode('utf-8'), ['sql_injection'])
-    result = tracker.analyze(tree, "test.php")
+    result = tracker.analyze(tree, "test.php") # type: ignore
     vulns = result["vulnerabilities"]
     assert len(vulns) == 1
     assert vulns[0]["type"] == "sql_injection"
