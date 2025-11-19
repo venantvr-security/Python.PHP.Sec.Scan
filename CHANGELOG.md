@@ -141,27 +141,35 @@ python3 cli.py cache stats
 # Profiling
 from optimization.profiler import profiler
 
+
 @profiler.profile
 def my_analysis():
     pass
+
 
 profiler.print_stats()
 
 # Metrics
 from utils.metrics import ScanMetrics, TrendAnalyzer
 
+# noinspection PyUnresolvedReferences
 score = ScanMetrics.calculate_code_quality_score(results)
+# noinspection PyUnresolvedReferences
 risk = ScanMetrics.risk_assessment(results)
 
 analyzer = TrendAnalyzer()
+# noinspection PyUnresolvedReferences
 analyzer.add_scan(scan1_stats)
+# noinspection PyUnresolvedReferences
 analyzer.add_scan(scan2_stats)
 print(analyzer.get_trend())
 
 # Reporting
 from utils.reporting import ReportGenerator
 
+# noinspection PyUnresolvedReferences
 summary = ReportGenerator.generate_executive_summary(stats, vulns)
+# noinspection PyUnresolvedReferences
 markdown = ReportGenerator.generate_markdown_report(stats, vulns)
 
 # Smart Scheduling
@@ -174,8 +182,11 @@ workers = AdaptiveWorkerPool.get_optimal_workers()
 # Deduplication
 from utils.deduplicator import VulnerabilityDeduplicator, FalsePositiveFilter
 
+# noinspection PyUnresolvedReferences
 unique = VulnerabilityDeduplicator.deduplicate(vulns)
+# noinspection PyUnresolvedReferences
 comparison = VulnerabilityDeduplicator.compare_scans(previous_vulns, current_vulns)
+# noinspection PyUnresolvedReferences
 likely_real, likely_fp = FalsePositiveFilter.filter_false_positives(vulns)
 ```
 

@@ -149,6 +149,7 @@ rules:
       - pattern: "$_POST[*]"
       - pattern: "$_REQUEST[*]"
       - pattern: "$_COOKIE[*]"
+      - pattern: "$_SERVER[*]"
     sinks:
       - node_type: "include_expression"
         function: "include"
@@ -223,6 +224,7 @@ rules:
       - pattern: "$_GET[*]"
       - pattern: "$_POST[*]"
       - pattern: "$_REQUEST[*]"
+      - pattern: "$_SERVER[*]"
     sinks:
       - node_type: "function_call_expression"
         function: "file_get_contents"

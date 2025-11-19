@@ -177,6 +177,7 @@ scanner = ParallelScanner(
 
 # Scan
 scan_context = {'root_path': '/path/to/project', 'project': 'myapp'}
+# noinspection PyUnresolvedReferences
 results = scanner.scan_files(php_files, scan_context=scan_context)
 
 # Get statistics

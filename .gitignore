@@ -58,3 +58,6 @@ reports/
 batch_results/
 metrics/
 templates/*.html
+*.sarif
+rapport*.sarif
+/tmp/

@@ -92,6 +92,7 @@ from plugins.metrics_exporter import MetricsExporterPlugin
 plugin = MetricsExporterPlugin(export_format='json', output_dir='metrics')
 
 # Export to Prometheus format
+# noinspection PyRedeclaration
 plugin = MetricsExporterPlugin(export_format='prometheus', output_dir='metrics')
 ```
 
@@ -185,6 +186,7 @@ scanner = ParallelScanner(
 
 # Scan with plugin hooks
 scan_context = {'root_path': '/path/to/project', 'project': 'myapp'}
+# noinspection PyUnresolvedReferences
 results = scanner.scan_files(files, scan_context=scan_context)
 ```
 
@@ -331,6 +333,7 @@ class RateLimitPlugin(ScannerPlugin):
 
 ```python
 # tests/test_my_plugin.py
+# noinspection PyUnresolvedReferences
 from plugins.my_plugin import MyCustomPlugin
 
 
@@ -416,6 +419,7 @@ security_scan:
 Place plugins in the `plugins/` directory and they'll be auto-discovered:
 
 ```python
+# noinspection PyUnresolvedReferences
 manager = PluginManager()
 manager.load_from_directory('plugins')
 ```

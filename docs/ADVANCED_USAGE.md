@@ -18,6 +18,7 @@ from optimization.smart_scheduler import AdaptiveWorkerPool
 
 # Auto-detect optimal workers based on system load
 workers = AdaptiveWorkerPool.get_optimal_workers()
+# noinspection PyUnresolvedReferences
 scanner = ParallelScanner(vuln_types=types, max_workers=workers)
 ```
 
@@ -42,13 +43,16 @@ files = SmartScheduler.prioritize_files(files)
 ```python
 from optimization.profiler import profiler
 
+
 # Profile your custom analyzers
 @profiler.profile
 def custom_analysis(files):
     # Your analysis code
     pass
 
+
 # Run and print stats
+# noinspection PyUnresolvedReferences
 custom_analysis(files)
 profiler.print_stats()
 ```
@@ -86,6 +90,7 @@ else:
 from utils.deduplicator import VulnerabilityDeduplicator, FalsePositiveFilter
 
 # Scan
+# noinspection PyUnresolvedReferences
 results = scanner.scan_directory('/app')
 vulns = [v for r in results.values() for v in r['vulnerabilities']]
 
@@ -109,6 +114,7 @@ with open('previous_scan.json') as f:
     prev = json.load(f)['vulnerabilities']
 
 # Run new scan
+# noinspection PyUnresolvedReferences
 results = scanner.scan_directory('/app')
 curr = [v for r in results.values() for v in r['vulnerabilities']]
 
@@ -222,9 +228,13 @@ pipeline {
 
 ```python
 # plugins/custom_security_rules.py
+# noinspection PyUnresolvedReferences
 from plugins import BasePlugin
 
+
+# noinspection PyMethodMayBeStatic
 class CustomSecurityPlugin(BasePlugin):
+
     def on_scan_start(self, context):
         print(f"Starting scan for {context['project']}")
 
@@ -242,7 +252,9 @@ class CustomSecurityPlugin(BasePlugin):
         total = sum(len(r['vulnerabilities']) for r in results['files'].values())
         print(f"Total vulnerabilities: {total}")
 
+
 # Register plugin
+# noinspection PyUnresolvedReferences
 plugin_manager.register(CustomSecurityPlugin())
 ```
 
@@ -255,11 +267,14 @@ from utils.reporting import ReportGenerator
 from utils.metrics import ScanMetrics
 
 # Generate executive summary
+# noinspection PyUnresolvedReferences
 summary = ReportGenerator.generate_executive_summary(scan_stats, vulnerabilities)
 print(summary)
 
 # Generate multiple formats
+# noinspection PyUnresolvedReferences
 ReportGenerator.generate_json_report(scan_stats, vulnerabilities, 'report.json')
+# noinspection PyUnresolvedReferences
 md = ReportGenerator.generate_markdown_report(scan_stats, vulnerabilities)
 with open('SECURITY_REPORT.md', 'w') as f:
     f.write(md)
@@ -270,9 +285,11 @@ with open('SECURITY_REPORT.md', 'w') as f:
 ```python
 from utils.reporting import ConsoleFormatter
 
+# noinspection PyUnresolvedReferences
 for vuln in vulnerabilities[:10]:
     print(ConsoleFormatter.format_vulnerability(vuln))
 
+# noinspection PyUnresolvedReferences
 print(ConsoleFormatter.format_summary(scan_stats))
 ```
 

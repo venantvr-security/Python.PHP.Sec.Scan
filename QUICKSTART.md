@@ -104,6 +104,7 @@ scanner = ParallelScanner(
 )
 
 # Scan
+# noinspection PyUnresolvedReferences
 php_files = list(Path('/project').rglob('*.php'))
 results = scanner.scan_files(php_files)
 
