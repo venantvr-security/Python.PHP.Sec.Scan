@@ -1,9 +1,9 @@
 """Behave environment configuration."""
 
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from pathlib import Path
 
 # Add project root to Python path
@@ -58,9 +58,9 @@ def after_scenario(context, scenario):
 
 def before_feature(context, feature):
     """Run before each feature."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Feature: {feature.name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def after_feature(context, feature):

@@ -1,6 +1,5 @@
 # analysis/taint_tracker.py
 import logging
-import re
 from typing import List, Dict, Set, Any
 
 import tree_sitter_php as tsphp

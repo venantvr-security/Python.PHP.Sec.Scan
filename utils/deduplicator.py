@@ -1,8 +1,8 @@
 # utils/deduplicator.py
 """Deduplicate vulnerabilities across scans."""
 
-from typing import List, Dict, Any, Set
 import hashlib
+from typing import List, Dict, Any, Set
 
 
 class VulnerabilityDeduplicator:
@@ -41,8 +41,8 @@ class VulnerabilityDeduplicator:
 
     @staticmethod
     def compare_scans(
-        previous_vulns: List[Dict[str, Any]],
-        current_vulns: List[Dict[str, Any]]
+            previous_vulns: List[Dict[str, Any]],
+            current_vulns: List[Dict[str, Any]]
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Compare two scan results.
@@ -143,8 +143,8 @@ class FalsePositiveFilter:
 
     @staticmethod
     def filter_false_positives(
-        vulnerabilities: List[Dict[str, Any]],
-        aggressive: bool = False
+            vulnerabilities: List[Dict[str, Any]],
+            aggressive: bool = False
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Filter false positives.

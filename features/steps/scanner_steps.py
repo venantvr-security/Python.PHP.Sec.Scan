@@ -1,17 +1,13 @@
 """BDD step definitions for scanner tests."""
 
-import os
-import time
 import tempfile
+import time
 from pathlib import Path
-from behave import given, when, then, step
-import json
 
-from workers.parallel_scanner import ParallelScanner
-from core.config import Config
-from cache.ast_cache import ASTCache
+from behave import given, when, then
+
 from features.steps.scanner_mock import mock_scan_results
-
+from workers.parallel_scanner import ParallelScanner
 
 # Test data
 VULNERABLE_SQL = """<?php
@@ -301,6 +297,7 @@ def step_verify_severity(context, severity):
                 f"Expected severity {severity}, got {vuln.get('severity')}"
     else:
         from core.detection_engine import DetectionEngine
+
         for result in context.results.values():
             for vuln in result.get('vulnerabilities', []):
                 rule = DetectionEngine.get_rule(vuln['type'])
@@ -318,6 +315,7 @@ def step_verify_cwe(context, cwe_id):
                 f"Expected CWE {cwe_id}, got {vuln.get('cwe_id')}"
     else:
         from core.detection_engine import DetectionEngine
+
         for result in context.results.values():
             for vuln in result.get('vulnerabilities', []):
                 found_cwe = DetectionEngine.get_cwe_id(vuln['type'])

@@ -1,8 +1,8 @@
 # utils/reporting.py
 """Advanced reporting utilities."""
 
-from typing import Dict, List, Any
 import json
+from typing import Dict, List, Any
 
 
 class ReportGenerator:
@@ -10,8 +10,8 @@ class ReportGenerator:
 
     @staticmethod
     def generate_executive_summary(
-        scan_stats: Dict[str, Any],
-        vulnerabilities: List[Dict[str, Any]]
+            scan_stats: Dict[str, Any],
+            vulnerabilities: List[Dict[str, Any]]
     ) -> str:
         """Generate executive summary for management."""
         from utils.metrics import ScanMetrics
@@ -52,12 +52,11 @@ class ReportGenerator:
 
     @staticmethod
     def generate_json_report(
-        scan_stats: Dict[str, Any],
-        vulnerabilities: List[Dict[str, Any]],
-        output_file: str = None
+            scan_stats: Dict[str, Any],
+            vulnerabilities: List[Dict[str, Any]],
+            output_file: str = None
     ) -> str:
         """Generate comprehensive JSON report."""
-        from utils.metrics import ScanMetrics
 
         report = {
             'version': '2.4.0',
@@ -87,8 +86,8 @@ class ReportGenerator:
 
     @staticmethod
     def generate_markdown_report(
-        scan_stats: Dict[str, Any],
-        vulnerabilities: List[Dict[str, Any]]
+            scan_stats: Dict[str, Any],
+            vulnerabilities: List[Dict[str, Any]]
     ) -> str:
         """Generate Markdown report for documentation."""
         from collections import Counter

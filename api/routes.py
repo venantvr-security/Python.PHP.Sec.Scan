@@ -1,14 +1,13 @@
 """API routes for production scanner."""
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, validator
-from pathlib import Path
 
-from core.exceptions import ValidationError, ScanError, RateLimitError
-from core.rate_limiter import RateLimiter
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Request
+from pydantic import BaseModel, Field, validator
+
+from core.exceptions import ValidationError, RateLimitError
 from core.logger import get_logger
+from core.rate_limiter import RateLimiter
 from core.validators import validate_directory, validate_vulnerability_types
 
 logger = get_logger('api.routes')
@@ -103,8 +102,8 @@ async def check_rate_limit(request: Request):
 # Routes
 @router.post("/scan", response_model=ScanResponse, dependencies=[Depends(check_rate_limit)])
 async def create_scan(
-    scan_request: ScanRequest,
-    background_tasks: BackgroundTasks
+        scan_request: ScanRequest,
+        background_tasks: BackgroundTasks
 ):
     """
     Create a new security scan.
@@ -122,6 +121,7 @@ async def create_scan(
 
         # Generate scan ID
         import uuid
+
         scan_id = str(uuid.uuid4())
 
         # Queue scan in background
@@ -235,12 +235,12 @@ async def get_metrics():
 
 # Background task
 async def run_scan(
-    scan_id: str,
-    target: str,
-    vuln_types: List[str],
-    exclude_patterns: List[str],
-    max_workers: Optional[int],
-    use_cache: bool
+        scan_id: str,
+        target: str,
+        vuln_types: List[str],
+        exclude_patterns: List[str],
+        max_workers: Optional[int],
+        use_cache: bool
 ):
     """Run scan in background."""
     try:

@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Optional, Any
+
 import yaml
 from dotenv import load_dotenv
 
@@ -31,7 +32,7 @@ class CacheConfig:
     enabled: bool = True
     backend: str = 'disk'  # disk or redis
     ttl: int = 86400  # 24 hours
-    size_limit: int = 1024**3  # 1GB
+    size_limit: int = 1024 ** 3  # 1GB
     redis_url: Optional[str] = None
 
 

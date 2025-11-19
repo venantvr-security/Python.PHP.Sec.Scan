@@ -24,15 +24,18 @@ implements taint analysis to detect security vulnerabilities in PHP code.
 **Layer 3: Processing Components**
 
 *Analysis Engine*
+
 - `analysis/taint_tracker.py` - Intra-procedural taint analysis
 - `analysis/call_graph.py` - Function relationship mapping
 - `analysis/interprocedural.py` - Cross-function propagation
 
 *Caching Layer*
+
 - `cache/ast_cache.py` - Disk-based persistent cache
 - `cache/redis_cache.py` - Optional distributed L2 cache
 
 *Plugin System*
+
 - WordPress plugin - Framework-specific checks
 - Performance Monitor - Scan optimization
 - Notification plugins - Slack, email alerts
@@ -146,25 +149,30 @@ class ScannerPlugin(ABC):
 ### 4. Database Schema
 
 **projects** table
+
 - id, name, root_path, is_wordpress
 - created_at, updated_at
 
 **scans** table
+
 - id, project_id, status, vuln_types
 - started_at, completed_at, duration
 - total_files, scanned_files, total_vulnerabilities
 
 **vulnerabilities** table
+
 - id, scan_id, vuln_type, severity
 - filepath, line_number, column_number
 - sink_function, tainted_variable
 - is_suppressed, suppression_reason
 
 **warnings** table
+
 - id, scan_id, warning_type
 - filepath, line_number, message
 
 **files** table
+
 - id, scan_id, filepath, file_hash
 - analyzed, analysis_duration_ms
 - vulnerabilities_count, warnings_count

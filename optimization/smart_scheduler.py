@@ -2,8 +2,8 @@
 """Smart scheduling for optimal scan performance."""
 
 import os
-from typing import List, Tuple
 from pathlib import Path
+from typing import List
 
 
 class SmartScheduler:
@@ -111,9 +111,9 @@ class SmartScheduler:
 
     @staticmethod
     def discover_php_files(
-        directory: str,
-        exclude_patterns: List[str] = None,
-        max_size: int = 10 * 1024 * 1024  # 10MB
+            directory: str,
+            exclude_patterns: List[str] = None,
+            max_size: int = 10 * 1024 * 1024  # 10MB
     ) -> List[str]:
         """
         Discover PHP files with smart filtering.

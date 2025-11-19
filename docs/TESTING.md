@@ -21,12 +21,14 @@ BDD testing framework using Behave successfully implemented and validated.
 **Command:** `./.venv/bin/behave features/ --format=progress`
 
 **Final Results:**
+
 - **Total:** 31 scenarios (11 passed, 20 failed)
 - **Steps:** 113 passed, 20 failed, 32 skipped
 - **Execution Time:** 9.745s
 - **Features:** 0 passed, 3 failed
 
 **Breakdown:**
+
 - API Feature: 6/10 scenarios passing (60%)
 - Scanner Feature: 5/9 scenarios passing (56%)
 - Configuration Feature: 0/7 scenarios passing (0%)
@@ -34,6 +36,7 @@ BDD testing framework using Behave successfully implemented and validated.
 ### Passing Scenarios
 
 #### API Tests (6/10)
+
 - ✅ Health check de l'API
 - ✅ Vérifier le statut d'un scan
 - ✅ Récupérer les résultats d'un scan
@@ -42,6 +45,7 @@ BDD testing framework using Behave successfully implemented and validated.
 - ✅ Documentation OpenAPI
 
 #### Scanner Tests
+
 - ✅ Scanner avec cache activé
 - ✅ Scanner un fichier PHP sécurisé
 - ✅ Framework execution (vulnerability detection logic requires fixes)
@@ -49,18 +53,21 @@ BDD testing framework using Behave successfully implemented and validated.
 ### Failing Scenarios (20 total)
 
 **Scanner Issues (4 failures):**
+
 1. SQL injection detection - 0 vulnerabilities found (expected 1)
 2. XSS detection - 0 vulnerabilities found (expected 1)
 3. Cache performance verification - timing assertion issues
 4. Scenario outline tests - vulnerability detection not working
 
 **API Issues (4 failures):**
+
 1. POST /scan endpoint - needs mock scanner integration
 2. Rate limiting - not enforced in TestClient (expected 429, got 200)
 3. Validation errors - endpoint requires implementation
 4. CORS headers - OPTIONS returns 405 instead of proper CORS
 
 **Configuration Issues (7 failures):**
+
 1. All config tests failing due to missing core/config.py implementation
 2. Context attribute initialization needs fixing
 3. YAML parsing not integrated
@@ -79,6 +86,7 @@ BDD testing framework using Behave successfully implemented and validated.
 ### Test Coverage
 
 **Vulnerability Types Tested:**
+
 - sql_injection
 - xss
 - rce
@@ -88,6 +96,7 @@ BDD testing framework using Behave successfully implemented and validated.
 - auth_bypass
 
 **API Endpoints Tested:**
+
 - GET /api/v1/health
 - POST /api/v1/scan
 - GET /api/v1/scan/{id}/status
@@ -98,6 +107,7 @@ BDD testing framework using Behave successfully implemented and validated.
 - OPTIONS /api/v1/scan
 
 **Configuration Tests:**
+
 - Default configuration
 - YAML file configuration
 - Environment variable configuration
@@ -131,6 +141,7 @@ BDD testing framework using Behave successfully implemented and validated.
 ### Test Infrastructure Quality
 
 **Strengths:**
+
 - Clean Gherkin syntax in French
 - Comprehensive step definitions
 - Proper test isolation with temp directories
@@ -139,6 +150,7 @@ BDD testing framework using Behave successfully implemented and validated.
 - Environment variable management
 
 **Architecture:**
+
 - before_all/after_all: Global setup/teardown
 - before_scenario/after_scenario: Test isolation
 - before_feature/after_feature: Feature-level reporting
@@ -163,7 +175,8 @@ BDD testing framework is **fully implemented and operational**. Test infrastruct
 
 **Current Pass Rate: 35.5%** (11/31 scenarios)
 
-Failures are due to **missing implementations** in scanner logic, API endpoints, and config module - not BDD framework issues. The test infrastructure successfully validates what exists and correctly identifies what needs implementation.
+Failures are due to **missing implementations** in scanner logic, API endpoints, and config module - not BDD framework issues. The test infrastructure successfully
+validates what exists and correctly identifies what needs implementation.
 
 **Framework Status:** ✅ Production-Ready
 **Test Execution:** ✅ Fully Operational

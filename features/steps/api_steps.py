@@ -2,8 +2,8 @@
 
 import json
 import time
+
 from behave import given, when, then
-import requests
 from fastapi.testclient import TestClient
 
 
@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 def step_start_api(context):
     """Start API for testing."""
     from api.app import app
+
     context.client = TestClient(app)
     context.api_base = "http://localhost:8000"
 
@@ -163,4 +164,4 @@ def step_verify_swagger_ui(context):
     """Verify Swagger UI page."""
     assert 'swagger' in context.response.text.lower() or \
            'openapi' in context.response.text.lower(), \
-           "Swagger UI not found in response"
+        "Swagger UI not found in response"

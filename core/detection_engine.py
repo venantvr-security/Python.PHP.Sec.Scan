@@ -1,10 +1,8 @@
 """Advanced detection engine with improved accuracy."""
 
-from typing import List, Dict, Set, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-
-from tree_sitter import Node
+from typing import List, Dict, Optional, Any
 
 
 class Severity(Enum):
@@ -320,10 +318,10 @@ class DetectionEngine:
 
     @classmethod
     def calculate_confidence(
-        cls,
-        has_sanitization: bool,
-        has_validation: bool,
-        context_analysis: bool
+            cls,
+            has_sanitization: bool,
+            has_validation: bool,
+            context_analysis: bool
     ) -> Confidence:
         """
         Calculate confidence level for detection.

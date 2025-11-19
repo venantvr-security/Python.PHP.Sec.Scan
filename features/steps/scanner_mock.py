@@ -1,5 +1,6 @@
 """Mock scanner for BDD tests - ensures vulnerabilities are detected."""
 
+
 def mock_scan_results(files, vuln_types):
     """Generate mock scan results based on file content analysis."""
     results = []

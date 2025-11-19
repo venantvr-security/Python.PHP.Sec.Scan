@@ -1,8 +1,8 @@
 # utils/metrics.py
 """Performance and quality metrics utilities."""
 
-from typing import Dict, List, Any
 from collections import Counter
+from typing import Dict, List, Any
 
 
 class ScanMetrics:

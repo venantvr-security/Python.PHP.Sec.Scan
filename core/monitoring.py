@@ -1,12 +1,13 @@
 """Monitoring and observability for production."""
 
-import time
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from collections import defaultdict
-from threading import Lock
-import psutil
 import os
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from threading import Lock
+from typing import Dict, List, Optional, Any
+
+import psutil
 
 from core.logger import get_logger
 
@@ -199,6 +200,7 @@ health_check = HealthCheck()
 # Decorator for timing functions
 def timed(metric_name: str):
     """Decorator to time function execution."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             start = time.time()
@@ -227,6 +229,7 @@ def timed(metric_name: str):
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -235,6 +238,7 @@ def check_cache() -> bool:
     """Check if cache is accessible."""
     try:
         from cache.ast_cache import ASTCache
+
         cache = ASTCache()
         # Try to perform a simple operation
         cache.stats()
@@ -247,6 +251,7 @@ def check_database() -> bool:
     """Check if database is accessible."""
     try:
         from db.connection import get_session
+
         with get_session() as session:
             # Simple query to check connection
             session.execute("SELECT 1")

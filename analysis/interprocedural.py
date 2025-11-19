@@ -1,8 +1,8 @@
 # analysis/interprocedural.py
 from dataclasses import dataclass, field
-from typing import Dict, List, Set, Optional, Tuple
+from typing import Dict, List, Set, Optional
+
 from tree_sitter import Node
-from functools import lru_cache
 
 from analysis.call_graph import CallGraph, CallSite, FunctionDef
 from analysis.taint_tracker import TaintTracker

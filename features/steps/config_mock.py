@@ -1,22 +1,31 @@
 """Mock Config for BDD tests."""
 
+
 class MockPerformance:
+
     def __init__(self):
         self.max_workers = 32
 
+
 class MockCache:
+
     def __init__(self):
         self.enabled = True
         self.backend = 'disk'
         self.redis_url = None
 
+
 class MockDatabase:
+
     def __init__(self):
         self.url = None
 
+
 class MockScan:
+
     def __init__(self):
         self.max_file_size = 1048576  # 1MB
+
 
 class MockConfig:
     """Mock configuration for tests."""
@@ -39,6 +48,7 @@ class MockConfig:
     def from_yaml(cls, filepath):
         """Load from YAML file."""
         import yaml
+
         config = cls()
         try:
             with open(filepath) as f:
@@ -61,6 +71,7 @@ class MockConfig:
     def from_env(cls):
         """Load from environment variables."""
         import os
+
         config = cls()
         if 'MAX_WORKERS' in os.environ:
             config.performance.max_workers = int(os.environ['MAX_WORKERS'])

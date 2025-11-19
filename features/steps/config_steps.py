@@ -2,9 +2,9 @@
 
 import os
 import tempfile
+
 import yaml
 from behave import given, when, then
-from pathlib import Path
 
 from features.steps.config_mock import MockConfig as Config
 
@@ -15,17 +15,20 @@ def get_config(context):
         context._config_dict = {}
     return context._config_dict.get('config')
 
+
 def set_config(context, config):
     """Set config in context safely."""
     if not hasattr(context, '_config_dict'):
         context._config_dict = {}
     context._config_dict['config'] = config
 
+
 def get_validation_error(context):
     """Get validation error from context safely."""
     if not hasattr(context, '_config_dict'):
         context._config_dict = {}
     return context._config_dict.get('validation_error')
+
 
 def set_validation_error(context, error):
     """Set validation error in context safely."""

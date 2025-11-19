@@ -1,11 +1,11 @@
 # optimization/profiler.py
 """Performance profiling utilities."""
 
-import time
 import functools
 import logging
-from typing import Callable, Any
+import time
 from collections import defaultdict
+from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ class PerformanceProfiler:
 
     def profile(self, func: Callable) -> Callable:
         """Decorator to profile function execution time."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             start = time.perf_counter()
@@ -30,6 +31,7 @@ class PerformanceProfiler:
             self.call_counts[func_name] += 1
 
             return result
+
         return wrapper
 
     def get_stats(self) -> dict:
@@ -55,7 +57,7 @@ class PerformanceProfiler:
         print("-" * 80)
 
         for func_name, data in sorted(stats.items(), key=lambda x: -x[1]['total_time']):
-            print(f"{func_name:<50} {data['calls']:<10} {data['total_time']:<12.3f} {data['avg_time']*1000:<12.3f}")
+            print(f"{func_name:<50} {data['calls']:<10} {data['total_time']:<12.3f} {data['avg_time'] * 1000:<12.3f}")
 
     def reset(self):
         """Reset all profiling data."""

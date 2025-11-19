@@ -1,15 +1,12 @@
 """Tests for core modules."""
 
 import pytest
-from pathlib import Path
-import tempfile
-import os
 
-from core.exceptions import ValidationError, ConfigurationError
-from core.validators import validate_file_path, validate_directory, validate_vulnerability_types
-from core.config import Config, ScanConfig, load_config
-from core.rate_limiter import TokenBucket, SlidingWindowRateLimiter, RateLimiter
+from core.config import Config
 from core.detection_engine import DetectionEngine, Severity, Confidence
+from core.exceptions import ValidationError, ConfigurationError
+from core.rate_limiter import TokenBucket, SlidingWindowRateLimiter
+from core.validators import validate_file_path, validate_directory, validate_vulnerability_types
 
 
 class TestValidators:

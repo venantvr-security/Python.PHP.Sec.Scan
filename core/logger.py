@@ -1,11 +1,11 @@
 """Structured logging for production environment."""
 
+import json
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import json
-from datetime import datetime
 
 
 class JSONFormatter(logging.Formatter):
@@ -32,10 +32,10 @@ class JSONFormatter(logging.Formatter):
 
 
 def setup_logging(
-    level: str = 'INFO',
-    log_file: Optional[str] = None,
-    format_type: str = 'json',
-    app_name: str = 'php-security-scanner'
+        level: str = 'INFO',
+        log_file: Optional[str] = None,
+        format_type: str = 'json',
+        app_name: str = 'php-security-scanner'
 ) -> logging.Logger:
     """
     Setup structured logging for production.

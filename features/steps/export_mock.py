@@ -1,5 +1,6 @@
 """Mock exporters for BDD tests."""
 
+
 class MockSARIFExporter:
     """Mock SARIF exporter."""
 
@@ -39,6 +40,7 @@ class MockSARIFExporter:
             }]
         }
 
+
 class MockHTMLExporter:
     """Mock HTML exporter."""
 
@@ -74,6 +76,7 @@ class MockHTMLExporter:
 </html>"""
         return html
 
+
 class MockJSONExporter:
     """Mock JSON exporter."""
 
@@ -81,6 +84,7 @@ class MockJSONExporter:
     def export(results):
         """Export to JSON format."""
         import json
+
         return json.dumps({
             "scan_results": results,
             "total_vulnerabilities": len(results),

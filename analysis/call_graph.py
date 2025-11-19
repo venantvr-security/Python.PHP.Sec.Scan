@@ -1,8 +1,7 @@
 # analysis/call_graph.py
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Set, Optional, Tuple
-from pathlib import Path
 
 from tree_sitter import Node
 

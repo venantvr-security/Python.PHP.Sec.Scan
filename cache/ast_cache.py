@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ASTCache:
     """Optimized cache for AST analysis results with LRU eviction."""
 
-    def __init__(self, cache_dir: Optional[str] = None, ttl: int = 86400, size_limit: int = 1024**3):
+    def __init__(self, cache_dir: Optional[str] = None, ttl: int = 86400, size_limit: int = 1024 ** 3):
         """Initialize cache with size limit."""
         if cache_dir is None:
             cache_dir = os.getenv('CACHE_DIR', './cache_data')
@@ -20,7 +20,7 @@ class ASTCache:
         self.ttl = ttl
         self.cache = Cache(cache_dir, size_limit=size_limit, eviction_policy='least-recently-used')
 
-        logger.info(f"AST Cache: {cache_dir} (limit: {size_limit // 1024**2}MB)")
+        logger.info(f"AST Cache: {cache_dir} (limit: {size_limit // 1024 ** 2}MB)")
 
     def get(self, key: str) -> Optional[Any]:
         """

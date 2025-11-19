@@ -64,32 +64,38 @@ python web_interface.py
 ## Architecture
 
 **Entry Points**: CLI, Web Interface, REST API
+
 - `cli.py` - Command-line interface
 - `web_app.py` - Interactive web dashboard
 - `api/main.py` - FastAPI REST endpoints
 
 **Core Scanner** (`workers/parallel_scanner.py`)
+
 - Multi-threaded scanning (12 workers default)
 - Plugin hook system for extensibility
 - Real-time progress tracking
 
 **Analysis Engine**
+
 - Taint Tracker: Intra-procedural dataflow analysis
 - Call Graph: Inter-procedural analysis infrastructure
 - Interprocedural: Function parameter/return tracking
 
 **Caching Layer**
+
 - AST Cache: Disk-based with 80%+ hit rates
 - Redis L2: Optional distributed caching
 - 20x speedup on incremental scans
 
 **Plugin System**
+
 - WordPress: Framework-specific analysis
 - Performance Monitor: Scan optimization
 - Slack: Team notifications
 - Security Policies: CI/CD enforcement
 
 **Storage & Export**
+
 - Database: SQLite/PostgreSQL with scan history
 - Suppressions: YAML-based with audit trail
 - Export: SARIF, JSON, HTML, Prometheus metrics
@@ -200,7 +206,9 @@ print(f"Found {stats['total_vulnerabilities']} vulnerabilities")
 ```python
 from plugins import ScannerPlugin
 
+
 class MyPlugin(ScannerPlugin):
+
     def on_scan_start(self, context):
         print(f"Scanning {context['project']}")
 
@@ -284,9 +292,9 @@ curl -X POST http://localhost:8000/scan \
 from plugins.security_policy import SecurityPolicyPlugin
 
 plugin = SecurityPolicyPlugin(
-    max_critical=0,     # No critical allowed
-    max_high=5,         # Max 5 high severity
-    max_total=50,       # Max 50 total
+    max_critical=0,  # No critical allowed
+    max_high=5,  # Max 5 high severity
+    max_total=50,  # Max 50 total
     fail_on_violation=True  # Exit 1 on violation
 )
 # Exits with code 1 if thresholds exceeded
@@ -306,7 +314,7 @@ plugin = SecurityPolicyPlugin(
       vuln: sql_injection
   filters:
     - function: escape_sql
-      sanitizes: [sql_injection]
+      sanitizes: [ sql_injection ]
 ```
 
 ### Suppressions (suppressions.yaml)

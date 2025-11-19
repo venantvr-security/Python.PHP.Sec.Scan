@@ -1,10 +1,10 @@
 """Rate limiting and throttling for API and scanner."""
 
+import hashlib
 import time
-from typing import Optional, Dict
 from collections import deque
 from threading import Lock
-import hashlib
+from typing import Optional, Dict
 
 from core.exceptions import RateLimitError
 

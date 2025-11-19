@@ -1,15 +1,16 @@
 """Production-ready FastAPI application."""
 
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
-import time
 
 from api.routes import router
 from core.config import load_config
-from core.logger import setup_logging, get_logger
 from core.exceptions import ScannerException
+from core.logger import setup_logging, get_logger
 
 # Load configuration
 config = load_config()

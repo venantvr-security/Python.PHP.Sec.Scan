@@ -52,6 +52,7 @@ uvicorn api.app:app --host 0.0.0.0 --port 8000 --workers 4
 ### Core Components
 
 **core/** directory structure:
+
 - `config.py` - Configuration management
 - `exceptions.py` - Custom exceptions
 - `logger.py` - Structured logging
@@ -70,6 +71,7 @@ uvicorn api.app:app --host 0.0.0.0 --port 8000 --workers 4
 ### Logging
 
 **Structured JSON logging:**
+
 ```json
 {
   "timestamp": "2025-01-15T10:30:00Z",
@@ -86,6 +88,7 @@ uvicorn api.app:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 **Text logging (development):**
+
 ```
 2025-01-15 10:30:00 - scanner - INFO - Scan completed
 ```
@@ -210,6 +213,7 @@ curl -H "X-API-Key: your-api-key" http://localhost:8000/api/v1/scan
 ### Endpoints
 
 **Create Scan:**
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/scan \
   -H "Content-Type: application/json" \
@@ -222,21 +226,25 @@ curl -X POST http://localhost:8000/api/v1/scan \
 ```
 
 **Get Scan Status:**
+
 ```bash
 curl http://localhost:8000/api/v1/scan/{scan_id}/status
 ```
 
 **Get Results:**
+
 ```bash
 curl http://localhost:8000/api/v1/scan/{scan_id}/results
 ```
 
 **Health Check:**
+
 ```bash
 curl http://localhost:8000/api/v1/health
 ```
 
 **Metrics:**
+
 ```bash
 curl http://localhost:8000/api/v1/metrics
 ```
@@ -300,6 +308,7 @@ scrape_configs:
 Import dashboard ID: `XXXXX` (TODO)
 
 **Key Metrics:**
+
 - Scans per minute
 - Vulnerabilities found
 - Scan duration (p50, p95, p99)
@@ -317,6 +326,7 @@ performance:
 ```
 
 **Guidelines:**
+
 - CPU-bound: `max_workers = CPU_cores * 2`
 - IO-bound: `max_workers = CPU_cores * 4`
 - Large files: Reduce workers to avoid memory issues
@@ -339,6 +349,7 @@ database:
 ```
 
 For PostgreSQL:
+
 ```sql
 -- Increase connection limit
 ALTER SYSTEM SET max_connections = 200;
