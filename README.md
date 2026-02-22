@@ -429,5 +429,3 @@ Built with:
 ---
 
 **Version 2.4.0** | 118 tests passing (97 pytest + 21 BDD) | Production-ready
-
-Generated with [Claude Code](https://claude.com/claude-code)
